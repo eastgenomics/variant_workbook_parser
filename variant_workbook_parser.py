@@ -120,7 +120,7 @@ def extract_fields(filename) -> pd.DataFrame:
         df_report.loc[sheet, 'PS3'] = workbook[f"report_{sheet}"] \
                                               ['H12'].value
         df_report.loc[sheet, 'PS3_evidence'] = workbook[f"report_{sheet}"] \
-                                                       ['C12'].value                                                   
+                                                       ['C12'].value
         df_report.loc[sheet, 'PS4'] = workbook[f"report_{sheet}"] \
                                               ['H13'].value
         df_report.loc[sheet, 'PS4_evidence'] = workbook[f"report_{sheet}"] \
@@ -160,7 +160,7 @@ def extract_fields(filename) -> pd.DataFrame:
         df_report.loc[sheet, 'PP3'] = workbook[f"report_{sheet}"] \
                                               ['H22'].value
         df_report.loc[sheet, 'PP3_evidence'] = workbook[f"report_{sheet}"] \
-                                                       ['C22'].value                                                                                  
+                                                       ['C22'].value
         df_report.loc[sheet, 'PP4'] = workbook[f"report_{sheet}"] \
                                               ['H23'].value
         df_report.loc[sheet, 'PP4_evidence'] = workbook[f"report_{sheet}"] \
@@ -168,7 +168,7 @@ def extract_fields(filename) -> pd.DataFrame:
         df_report.loc[sheet, 'PP5'] = workbook[f"report_{sheet}"] \
                                               ['H24'].value
         df_report.loc[sheet, 'PP5_evidence'] = workbook[f"report_{sheet}"] \
-                                                       ['C24'].value 
+                                                       ['C24'].value
         df_report.loc[sheet, 'BS1'] = workbook[f"report_{sheet}"] \
                                               ['J8'].value
         df_report.loc[sheet, 'BS1_evidence'] = workbook[f"report_{sheet}"] \
@@ -192,11 +192,11 @@ def extract_fields(filename) -> pd.DataFrame:
         df_report.loc[sheet, 'BP3'] = workbook[f"report_{sheet}"] \
                                               ['J17'].value
         df_report.loc[sheet, 'BP3_evidence'] = workbook[f"report_{sheet}"] \
-                                                       ['C17'].value                                                
+                                                       ['C17'].value
         df_report.loc[sheet, 'BS4'] = workbook[f"report_{sheet}"] \
                                               ['J20'].value
         df_report.loc[sheet, 'BS4_evidence'] = workbook[f"report_{sheet}"] \
-                                                       ['C20'].value                                              
+                                                       ['C20'].value
         df_report.loc[sheet, 'BP1'] = workbook[f"report_{sheet}"] \
                                               ['J21'].value
         df_report.loc[sheet, 'BP1_evidence'] = workbook[f"report_{sheet}"] \
