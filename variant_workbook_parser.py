@@ -215,7 +215,7 @@ def check_col(
       tuple containing column names and cells from report sheet
       variant workbook file name
     """
-    for idx, sheet in enumerate(report_sheets):
+    for sheet in report_sheets:
         # check for non-evidence and non-HGVSc as those two are not applicable
         # to column -1
         for field, cell in field_cells:
@@ -272,7 +272,7 @@ def main():
     input_file = arguments.input
     unusual_sample_name = arguments.unusual_sample_name
     # extract fields from variant workbooks as df and merged
-    for index, filename in enumerate(input_file):
+    for filename in input_file:
         df_summary = get_summary_fields(filename, unusual_sample_name)
         df_included = get_included_fields(filename)
         df_report = get_report_fields(filename)
