@@ -16,13 +16,12 @@ This script may be executed as a standalone to parse the variant workbook(s).
 
 **File inputs (required)**:
 
-- `--input` / `--i`: variant workbook spread sheet(s)
+- `--input` / `--i`: variant workbook spreadsheet(s)
 
 **Other Inputs (optional):**
 
-`--outdir` / `--o`: dir where to save output file(s)
+`--outdir` / `--o`: dir where to save output file(s) \
 `--unusual_sample_name`: boolean - default is False 
 
 ## Command line to run 
-```python variant_workbook_parser.py --i <sample_1.xlsx sample_2.xlsx ... sample_n.xlsx> \
-                                  --o </path/to/folder/> --unusual_sample_name```
+```python variant_workbook_parser.py --i <sample_1.xlsx sample_2.xlsx ... sample_n.xlsx>  --o </path/to/folder/> --unusual_sample_name```
