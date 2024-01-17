@@ -33,14 +33,14 @@ def get_command_line_args() -> argparse.Namespace:
     return args
 
 
-def get_summary_fields(filename: str, unusual_sample_type: bool) -> pd.DataFrame:
+def get_summary_fields(filename: str, unusual_sample_name: bool) -> pd.DataFrame:
     """
     Extract data from summary sheet of variant workbook
 
     Parameters
     ----------
       variant workbook file name
-      boolean for unusual_sample_type
+      boolean for unusual_sample_name
 
     Return
     ------
@@ -59,7 +59,7 @@ def get_summary_fields(filename: str, unusual_sample_type: bool) -> pd.DataFrame
     testcode = split_sampleID[3]
     sex = split_sampleID[4]
     probesetID = split_sampleID[5]
-    if not unusual_sample_type:
+    if not unusual_sample_name:
         check_sample_name(instrumentID, sample_ID, batchID, testcode, sex,
                           probesetID, filename)
     d = {"instrumentID": instrumentID,
@@ -270,10 +270,10 @@ def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
 def main():
     arguments = get_command_line_args()
     input_file = arguments.input
-    unusual_sample_type = arguments.unusual_sample_name
+    unusual_sample_name = arguments.unusual_sample_name
     # extract fields from variant workbooks as df and merged
     for index, filename in enumerate(input_file):
-        df_summary = get_summary_fields(filename, unusual_sample_type)
+        df_summary = get_summary_fields(filename, unusual_sample_name)
         df_included = get_included_fields(filename)
         df_report = get_report_fields(filename)
         df_merged = pd.merge(df_included, df_summary, how="cross")
