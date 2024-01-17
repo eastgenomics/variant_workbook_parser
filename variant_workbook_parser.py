@@ -33,7 +33,7 @@ def get_command_line_args() -> argparse.Namespace:
     return args
 
 
-def get_summary_fields(filename: str, unusual_sample_type: bool) -> str:
+def get_summary_fields(filename: str, unusual_sample_type: bool) -> pd.DataFrame:
     """
     Extract data from summary sheet of variant workbook
 
@@ -44,8 +44,7 @@ def get_summary_fields(filename: str, unusual_sample_type: bool) -> str:
 
     Return
     ------
-      str values for CI, panel, date, ref_genome, instrumentID, sample_ID,
-      batchID, testcode, sex, probesetID
+      data frame from summary sheet
     """
     workbook = load_workbook(filename)
     sampleID = workbook["summary"]["B1"].value
@@ -63,45 +62,40 @@ def get_summary_fields(filename: str, unusual_sample_type: bool) -> str:
     if not unusual_sample_type:
         check_sample_name(instrumentID, sample_ID, batchID, testcode, sex,
                           probesetID, filename)
+    d = {"instrumentID": instrumentID,
+         "specimenID": sample_ID,
+         "batchID": batchID,
+         "test code": testcode,
+         "sex": sex,
+         "probesetID": probesetID,
+         "CI": CI,
+         "panel": panel,
+         "ref_genome": ref_genome,
+         "date": date}
+    df_summary = pd.DataFrame([d])
+    df_summary['date'] = pd.to_datetime(df_summary['date'])
+    df_summary["Organisation"] = "East Genomic Laboratory Hub"
+    df_summary["Institution"] = "Cambridge University Hospitals Genomics"
 
-    return (CI, panel, date, ref_genome, instrumentID, sample_ID, batchID,
-            testcode, sex, probesetID)
+    return df_summary
 
 
-def get_included_fields(filename: str, unusual_sample_type:
-                        bool) -> pd.DataFrame:
+def get_included_fields(filename: str) -> pd.DataFrame:
     """
     Extract data from included sheet of variant workbook
 
     Parameters
     ----------
       variant workbook file name
-      boolean for unusual_sample_type
 
     Return
     ------
       data frame from included sheet
     """
 
-    (CI, panel, date, ref_genome, instrumentID, sample_ID, batchID, testcode,
-     sex, probesetID) = get_summary_fields(filename, unusual_sample_type)
     df = pd.read_excel(filename, sheet_name="included", usecols="A:AT")
     df_included = df[["CHROM", "POS", "REF", "ALT", "HGVSc", "Consequence",
                       "Interpreted", "Comment"]].copy()
-    df_included["ref_genome"] = ref_genome
-    df_included["instrumentID"] = instrumentID
-    df_included["batchID"] = batchID
-    df_included["specimenID"] = sample_ID
-    df_included["test code"] = testcode
-    df_included["sex"] = sex
-    df_included["probesetID"] = probesetID
-    df_included["CI"] = CI
-    df_included["panel"] = panel
-    df_included["date"] = date
-    df_included["date"] = pd.to_datetime(df_included["date"])
-    df_included["Organisation"] = "East Genomic Laboratory Hub"
-    df_included["Institution"] = "Cambridge University Hospitals Genomics"
-
     return df_included
 
 
@@ -279,10 +273,12 @@ def main():
     unusual_sample_type = arguments.unusual_sample_name
     # extract fields from variant workbooks as df and merged
     for index, filename in enumerate(input_file):
-        df_included = get_included_fields(filename, unusual_sample_type)
+        df_summary = get_summary_fields(filename, unusual_sample_type)
+        df_included = get_included_fields(filename)
         df_report = get_report_fields(filename)
-        df_merged = pd.merge(df_included, df_report, on="HGVSc", how="left")
-        df_merged.to_csv(arguments.outdir + Path(filename).stem + ".csv",
+        df_merged = pd.merge(df_included, df_summary, how="cross")
+        df_final = pd.merge(df_merged, df_report, on="HGVSc", how="left")
+        df_final.to_csv(arguments.outdir + Path(filename).stem + ".csv",
                          index=False)
     print("Done")
 
