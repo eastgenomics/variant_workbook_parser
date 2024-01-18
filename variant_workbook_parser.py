@@ -92,8 +92,10 @@ def get_included_fields(filename: str) -> pd.DataFrame:
     ------
       data frame from included sheet
     """
-
-    df = pd.read_excel(filename, sheet_name="included", usecols="A:AT")
+    workbook = load_workbook(filename)
+    num_variants = workbook['summary']['C34'].value
+    df = pd.read_excel(filename, sheet_name="included", usecols="A:AT",
+                       nrows=num_variants)
     df_included = df[["CHROM", "POS", "REF", "ALT", "HGVSc", "Consequence",
                       "Interpreted", "Comment"]].copy()
     return df_included
