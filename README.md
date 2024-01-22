@@ -23,5 +23,10 @@ This script may be executed as a standalone to parse the variant workbook(s).
 `--outdir` / `--o`: dir where to save output file(s) \
 `--unusual_sample_name`: boolean - default is False 
 
+## What outputs are expected from this app?
+- csv file containing the fields required to submit to Variant DB
+- txt file (optional) - txt file containing the file names with abnormal \
+  format or naming which are not parsed by this script
+
 ## Command line to run 
 ```python variant_workbook_parser.py --i <sample_1.xlsx sample_2.xlsx ... sample_n.xlsx>  --o </path/to/folder/> --unusual_sample_name```
