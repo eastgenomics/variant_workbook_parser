@@ -1,10 +1,10 @@
 import argparse
-from openpyxl import load_workbook
-import pandas as pd
+from typing import Union
+import re
 from pathlib import Path
 import numpy as np
-import re
-import sys
+from openpyxl import load_workbook
+import pandas as pd
 
 
 def get_command_line_args() -> argparse.Namespace:
@@ -33,7 +33,8 @@ def get_command_line_args() -> argparse.Namespace:
     return args
 
 
-def get_summary_fields(filename: str, unusual_sample_name: bool) -> pd.DataFrame:
+def get_summary_fields(filename: str, unusual_sample_name: bool) \
+                       -> Union[pd.DataFrame, str]:
     """
     Extract data from summary sheet of variant workbook
 
@@ -42,9 +43,10 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) -> pd.DataFrame
       variant workbook file name
       boolean for unusual_sample_name
 
-    Return
-    ------
+    Returns
+    -------
       data frame from summary sheet
+      str: Pass OR Fail
     """
     workbook = load_workbook(filename)
     sampleID = workbook["summary"]["B1"].value
@@ -59,14 +61,16 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) -> pd.DataFrame
     testcode = split_sampleID[3]
     sex = split_sampleID[4]
     probesetID = split_sampleID[5]
+
+    # checking sample naming
     if not unusual_sample_name:
-        check_sample_name(instrumentID, sample_ID, batchID, testcode, sex,
-                          probesetID, filename)
+        check_naming = check_sample_name(instrumentID, sample_ID,
+                                         batchID, testcode, sex,
+                                         probesetID, filename)
     d = {"instrumentID": instrumentID,
          "specimenID": sample_ID,
          "batchID": batchID,
          "test code": testcode,
-         "sex": sex,
          "probesetID": probesetID,
          "CI": CI,
          "panel": panel,
@@ -77,7 +81,7 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) -> pd.DataFrame
     df_summary["Organisation"] = "East Genomic Laboratory Hub"
     df_summary["Institution"] = "Cambridge University Hospitals Genomics"
 
-    return df_summary
+    return df_summary, check_naming
 
 
 def get_included_fields(filename: str) -> pd.DataFrame:
@@ -180,10 +184,6 @@ def get_report_fields(filename: str) -> pd.DataFrame:
         idx for idx in workbook.sheetnames if idx.lower().startswith("report")
     ]
 
-    # check if the cell in column -1 contains the expected name as in
-    # the field_cells tuple
-    check_col(workbook, report_sheets, field_cells, filename)
-
     for idx, sheet in enumerate(report_sheets):
         for field, cell in field_cells:
             df_report.loc[idx, field] = workbook[sheet][cell].value
@@ -203,49 +203,9 @@ def get_report_fields(filename: str) -> pd.DataFrame:
     return df_report
 
 
-def check_col(
-    workbook: object, report_sheets: list, field_cells: tuple, filename: str
-) -> None:
-    """
-    check if the cell in column -1 contains the expected name as in
-    field_cells tuple
-
-    Parameters
-    ----------
-      openpyxl workbook object
-      list containing names of report sheet from workbook
-      tuple containing column names and cells from report sheet
-      variant workbook file name
-    """
-    for sheet in report_sheets:
-        # check for non-evidence and non-HGVSc as those two are not applicable
-        # to column -1
-        for field, cell in field_cells:
-            if "evidence" not in field and "HGVSc" not in field:
-                cell_col = re.findall(r"\D+", cell)
-                cell_row = re.findall(r"\d+", cell)
-                cell_to_check = chr(ord(cell_col[0]) - 1) + cell_row[0]
-                try:
-                    assert workbook[sheet][cell_to_check].value == field
-                except AssertionError:
-                    print("Wrong col for", field, "in", sheet, "of", filename)
-                    sys.exit(1)
-
-        # check if Evidence is in col C and HGVSc in C2 cell
-        try:
-            col_C = []
-            for cell in workbook[sheet]["C"]:
-                col_C.append(cell.value)
-            assert "Evidence" in col_C, f"Evidence is not in col C in {sheet} of {filename}"
-            assert workbook[sheet]["C2"].value == "HGVSc", f"HGVSCs is not in C2 in {sheet} of {filename}"
-        except AssertionError as msg:
-            print(msg)
-            sys.exit(1)
-
-
 def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
                       testcode: str, sex: str, probesetID: str,
-                      filename: str) -> None:
+                      filename: str) -> str:
     """
     checking if individual parts of sample name have
     expected naming format
@@ -254,6 +214,10 @@ def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
     ----------
       str values for instrumentID, sample_ID, batchID, testcode,
       sex, probesetID
+
+    Return
+    ------
+      str: Pass or Fail
     """
     print("Checking the naming format")
     try:
@@ -264,24 +228,83 @@ def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
         assert re.match(r"^[A-Z]$", sex), f"Unusual sex naming in {filename}"
         assert 0 < len(probesetID) < 20, f"probesetID in {filename} is too long/short"
         assert probesetID.isalnum() and not probesetID.isalpha(), f"Unusual probesetID in {filename}"
+        check_naming = "Pass"
     except AssertionError as msg:
+        check_naming = "Fail"
         print(msg)
-        sys.exit(1)
+
+    return check_naming
+
+
+def checking_sheets(filename) -> str:
+    """
+    check if extra row(s)/col(s) are added in the sheets
+
+    Parameters
+    ----------
+      variant workbook file name
+
+    Return
+    ------
+      str Pass OR Fail
+    """
+    workbook = load_workbook(filename)
+    summary = workbook['summary']
+    included = workbook['included']
+    reports = [idx for idx in workbook.sheetnames if idx.lower().startswith("report")]
+    try:
+        assert summary["A51"].value == "Report Job ID:", f"extra row(s) added in summary of {filename}"
+        assert summary["I16"].value == "Date", f"extra col(s) added in summary of {filename}"
+        assert included['AT1'].value == "Interpreted", f"extra col(s) added in included of {filename}"
+        assert included.max_row == summary["C34"].value+1, f"extra row(s) added in included of {filename}"
+        for sheet in reports:
+            report = workbook[sheet]
+            assert report["B26"].value == "Final Classification", f"extra row(s) added in {report.title} of {filename}"
+            assert report["L4"].value == "B_POINTS", f"extra col(s) added in {report.title} of {filename}"
+        check_sheets = "Pass"
+    except AssertionError as msg:
+        check_sheets = "Fail"
+        print(msg)
+
+    return check_sheets
+
+
+def write_txt_file(filename):
+    """
+    write txt file output
+
+    Parameters
+    ----------
+      variant workbook file name
+    """
+    with open('workbooks_fail_to_parse.txt', 'a') as file:
+        file.write(filename+"\n")
+        file.close()
 
 
 def main():
     arguments = get_command_line_args()
     input_file = arguments.input
     unusual_sample_name = arguments.unusual_sample_name
+
     # extract fields from variant workbooks as df and merged
     for filename in input_file:
-        df_summary = get_summary_fields(filename, unusual_sample_name)
-        df_included = get_included_fields(filename)
-        df_report = get_report_fields(filename)
-        df_merged = pd.merge(df_included, df_summary, how="cross")
-        df_final = pd.merge(df_merged, df_report, on="HGVSc", how="left")
-        df_final.to_csv(arguments.outdir + Path(filename).stem + ".csv",
-                         index=False)
+        check_sheets = checking_sheets(filename)
+        if check_sheets == "Pass":
+            df_summary, checking_name = get_summary_fields(filename,
+                                                           unusual_sample_name)
+            if checking_name == "Pass":
+                df_included = get_included_fields(filename)
+                df_report = get_report_fields(filename)
+                df_merged = pd.merge(df_included, df_summary, how="cross")
+                df_final = pd.merge(df_merged, df_report, on="HGVSc",
+                                    how="left")
+                df_final.to_csv(arguments.outdir + Path(filename).stem +
+                                ".csv", index=False)
+            else:
+                write_txt_file(filename)
+        else:
+            write_txt_file(filename)
     print("Done")
 
 
