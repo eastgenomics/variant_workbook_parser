@@ -58,11 +58,10 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
     batchID = split_sampleID[2]
     testcode = split_sampleID[3]
     probesetID = split_sampleID[5]
+    ref_genome = "not_defined"
     for cell in workbook["summary"]["A"]:
         if cell.value == "Reference:":
             ref_genome = workbook["summary"][f"B{cell.row}"].value
-        else:
-            ref_genome = "not_defined"
 
     # checking sample naming
     does_name_pass = True
