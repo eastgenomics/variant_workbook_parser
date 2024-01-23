@@ -52,15 +52,20 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
     CI = workbook["summary"]["F1"].value
     panel = workbook["summary"]["F2"].value
     date = workbook["summary"]["I17"].value
-    ref_genome = workbook["summary"]["B41"].value
     split_sampleID = sampleID.split("-")
     instrumentID = split_sampleID[0]
     sample_ID = split_sampleID[1]
     batchID = split_sampleID[2]
     testcode = split_sampleID[3]
     probesetID = split_sampleID[5]
+    for cell in workbook["summary"]["A"]:
+        if cell.value == "Reference:":
+            ref_genome = workbook["summary"][f"B{cell.row}"].value
+        else:
+            ref_genome = "not_defined"
 
     # checking sample naming
+    does_name_pass = True
     if not unusual_sample_name:
         does_name_pass = check_sample_name(instrumentID, sample_ID,
                                            batchID, testcode,
@@ -251,7 +256,6 @@ def checking_sheets(filename: str) -> bool:
     summary = workbook['summary']
     reports = [idx for idx in workbook.sheetnames if idx.lower().startswith("report")]
     try:
-        assert summary["A51"].value == "Report Job ID:", f"extra row(s) added in summary of {filename}"
         assert summary["I16"].value == "Date", f"extra col(s) added in summary of {filename}"
         for sheet in reports:
             report = workbook[sheet]
@@ -285,15 +289,16 @@ def get_col_letter(worksheet: object, col_name: str) -> str:
     return col_letter
 
 
-def write_txt_file(filename: str) -> None:
+def write_txt_file(output_dir: str, filename: str) -> None:
     """
     write txt file output
 
     Parameters
     ----------
       variant workbook file name
+      str for output dir
     """
-    with open('workbooks_fail_to_parse.txt', 'a') as file:
+    with open(output_dir + 'workbooks_fail_to_parse.txt', 'a') as file:
         file.write(filename+"\n")
         file.close()
 
@@ -305,6 +310,7 @@ def main():
 
     # extract fields from variant workbooks as df and merged
     for filename in input_file:
+        print("Running", filename)
         does_sheet_pass = checking_sheets(filename)
         if does_sheet_pass:
             df_summary, does_name_pass = get_summary_fields(filename,
@@ -318,9 +324,9 @@ def main():
                 df_final.to_csv(arguments.outdir + Path(filename).stem +
                                 ".csv", index=False)
             else:
-                write_txt_file(filename)
+                write_txt_file(arguments.outdir, filename)
         else:
-            write_txt_file(filename)
+            write_txt_file(arguments.outdir, filename)
     print("Done")
 
 
