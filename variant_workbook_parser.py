@@ -1,5 +1,4 @@
 import argparse
-from typing import Union
 import re
 from pathlib import Path
 import numpy as np
@@ -34,7 +33,7 @@ def get_command_line_args() -> argparse.Namespace:
 
 
 def get_summary_fields(filename: str, unusual_sample_name: bool) \
-                       -> Union[pd.DataFrame, str]:
+                       -> tuple[pd.DataFrame, bool]:
     """
     Extract data from summary sheet of variant workbook
 
@@ -46,7 +45,7 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
     Returns
     -------
       data frame from summary sheet
-      str: Pass OR Fail
+      boolean
     """
     workbook = load_workbook(filename)
     sampleID = workbook["summary"]["B1"].value
@@ -59,14 +58,13 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
     sample_ID = split_sampleID[1]
     batchID = split_sampleID[2]
     testcode = split_sampleID[3]
-    sex = split_sampleID[4]
     probesetID = split_sampleID[5]
 
     # checking sample naming
     if not unusual_sample_name:
-        check_naming = check_sample_name(instrumentID, sample_ID,
-                                         batchID, testcode, sex,
-                                         probesetID, filename)
+        does_name_pass = check_sample_name(instrumentID, sample_ID,
+                                           batchID, testcode,
+                                           probesetID, filename)
     d = {"instrumentID": instrumentID,
          "specimenID": sample_ID,
          "batchID": batchID,
@@ -81,7 +79,7 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
     df_summary["Organisation"] = "East Genomic Laboratory Hub"
     df_summary["Institution"] = "Cambridge University Hospitals Genomics"
 
-    return df_summary, check_naming
+    return df_summary, does_name_pass
 
 
 def get_included_fields(filename: str) -> pd.DataFrame:
@@ -98,7 +96,9 @@ def get_included_fields(filename: str) -> pd.DataFrame:
     """
     workbook = load_workbook(filename)
     num_variants = workbook['summary']['C34'].value
-    df = pd.read_excel(filename, sheet_name="included", usecols="A:AT",
+    interpreted_col = get_col_letter(workbook["included"], "Interpreted")
+    df = pd.read_excel(filename, sheet_name="included",
+                       usecols=f"A:{interpreted_col}",
                        nrows=num_variants)
     df_included = df[["CHROM", "POS", "REF", "ALT", "HGVSc", "Consequence",
                       "Interpreted", "Comment"]].copy()
@@ -204,8 +204,8 @@ def get_report_fields(filename: str) -> pd.DataFrame:
 
 
 def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
-                      testcode: str, sex: str, probesetID: str,
-                      filename: str) -> str:
+                      testcode: str, probesetID: str,
+                      filename: str) -> bool:
     """
     checking if individual parts of sample name have
     expected naming format
@@ -213,11 +213,11 @@ def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
     Parameters
     ----------
       str values for instrumentID, sample_ID, batchID, testcode,
-      sex, probesetID
+      probesetID
 
     Return
     ------
-      str: Pass or Fail
+      boolean
     """
     print("Checking the naming format")
     try:
@@ -225,18 +225,17 @@ def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
         assert re.match(r"^\d{5}[A-Z]\d{4}$", sample_ID), f"Unusual sampleID in {filename}"
         assert re.match(r"^\d{2}[A-Z]{5}\d{1,}$", batchID), f"Unusual batchID in {filename}"
         assert re.match(r"^\d{4}$", testcode), f"Unusual testcode in {filename}"
-        assert re.match(r"^[A-Z]$", sex), f"Unusual sex naming in {filename}"
         assert 0 < len(probesetID) < 20, f"probesetID in {filename} is too long/short"
         assert probesetID.isalnum() and not probesetID.isalpha(), f"Unusual probesetID in {filename}"
-        check_naming = "Pass"
+        does_name_pass = True
     except AssertionError as msg:
-        check_naming = "Fail"
+        does_name_pass = False
         print(msg)
 
-    return check_naming
+    return does_name_pass
 
 
-def checking_sheets(filename) -> str:
+def checking_sheets(filename: str) -> bool:
     """
     check if extra row(s)/col(s) are added in the sheets
 
@@ -246,30 +245,47 @@ def checking_sheets(filename) -> str:
 
     Return
     ------
-      str Pass OR Fail
+      boolean
     """
     workbook = load_workbook(filename)
     summary = workbook['summary']
-    included = workbook['included']
     reports = [idx for idx in workbook.sheetnames if idx.lower().startswith("report")]
     try:
         assert summary["A51"].value == "Report Job ID:", f"extra row(s) added in summary of {filename}"
         assert summary["I16"].value == "Date", f"extra col(s) added in summary of {filename}"
-        assert included['AT1'].value == "Interpreted", f"extra col(s) added in included of {filename}"
-        assert included.max_row == summary["C34"].value+1, f"extra row(s) added in included of {filename}"
         for sheet in reports:
             report = workbook[sheet]
             assert report["B26"].value == "Final Classification", f"extra row(s) added in {report.title} of {filename}"
             assert report["L4"].value == "B_POINTS", f"extra col(s) added in {report.title} of {filename}"
-        check_sheets = "Pass"
+        does_sheet_pass = True
     except AssertionError as msg:
-        check_sheets = "Fail"
+        does_sheet_pass = False
         print(msg)
 
-    return check_sheets
+    return does_sheet_pass
 
 
-def write_txt_file(filename):
+def get_col_letter(worksheet: object, col_name: str) -> str:
+    """
+    Getting the column letter with specific col name
+
+    Parameters
+    ----------
+    openpyxl object of current sheet
+    str for name of column to get col letter
+
+    Return
+    -------
+        str for column letter for specific column name
+    """
+    for column_cell in worksheet.iter_cols(1, worksheet.max_column):
+        if column_cell[0].value == col_name:
+            col_letter = column_cell[0].column_letter
+
+    return col_letter
+
+
+def write_txt_file(filename: str) -> None:
     """
     write txt file output
 
@@ -289,11 +305,11 @@ def main():
 
     # extract fields from variant workbooks as df and merged
     for filename in input_file:
-        check_sheets = checking_sheets(filename)
-        if check_sheets == "Pass":
-            df_summary, checking_name = get_summary_fields(filename,
-                                                           unusual_sample_name)
-            if checking_name == "Pass":
+        does_sheet_pass = checking_sheets(filename)
+        if does_sheet_pass:
+            df_summary, does_name_pass = get_summary_fields(filename,
+                                                            unusual_sample_name)
+            if does_name_pass:
                 df_included = get_included_fields(filename)
                 df_report = get_report_fields(filename)
                 df_merged = pd.merge(df_included, df_summary, how="cross")
