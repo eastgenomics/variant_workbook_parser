@@ -106,6 +106,7 @@ def get_included_fields(filename: str) -> pd.DataFrame:
                        nrows=num_variants)
     df_included = df[["CHROM", "POS", "REF", "ALT", "HGVSc", "Consequence",
                       "Interpreted", "Comment"]].copy()
+    df_included["Interpreted"] = df_included["Interpreted"].str.lower()
     return df_included
 
 
@@ -252,7 +253,7 @@ def checking_sheets(filename: str) -> bool:
       boolean
     """
     workbook = load_workbook(filename)
-    summary = workbook['summary']
+    summary = workbook["summary"]
     reports = [idx for idx in workbook.sheetnames if idx.lower().startswith("report")]
     try:
         assert summary["I16"].value == "Date", f"extra col(s) added in summary of {filename}"
