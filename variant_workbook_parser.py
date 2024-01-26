@@ -50,6 +50,17 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
     workbook = load_workbook(filename)
     sampleID = workbook["summary"]["B1"].value
     CI = workbook["summary"]["F1"].value
+    if ";" in CI:
+        split_CI = CI.split(";")
+        indication = []
+        for each in split_CI:
+            remove_R = each.split("_")[1]
+            indication.append(remove_R)
+        new_CI = ";".join(indication)
+        print(new_CI)
+    else:
+        new_CI = CI.split("_")[1]
+        print(new_CI)
     panel = workbook["summary"]["F2"].value
     date = workbook["summary"]["I17"].value
     split_sampleID = sampleID.split("-")
@@ -74,14 +85,14 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
          "batchID": batchID,
          "test code": testcode,
          "probesetID": probesetID,
-         "CI": CI,
+         "CI": new_CI,
          "panel": panel,
          "ref_genome": ref_genome,
          "date": date}
     df_summary = pd.DataFrame([d])
     df_summary['date'] = pd.to_datetime(df_summary['date'])
-    df_summary["Organisation"] = "East Genomic Laboratory Hub"
-    df_summary["Institution"] = "Cambridge University Hospitals Genomics"
+    df_summary["Organisation"] = "Cambridge Genomics Laboratory"
+    df_summary["Institution"] = "East Genomic Laboratory Hub, NHS Genomic Medicine Service"
 
     return df_summary, does_name_pass
 
