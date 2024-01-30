@@ -57,10 +57,8 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
             remove_R = each.split("_")[1]
             indication.append(remove_R)
         new_CI = ";".join(indication)
-        print(new_CI)
     else:
         new_CI = CI.split("_")[1]
-        print(new_CI)
     panel = workbook["summary"]["F2"].value
     date = workbook["summary"]["I17"].value
     split_sampleID = sampleID.split("-")
@@ -93,6 +91,9 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
     df_summary['date'] = pd.to_datetime(df_summary['date'])
     df_summary["Organisation"] = "Cambridge Genomics Laboratory"
     df_summary["Institution"] = "East Genomic Laboratory Hub, NHS Genomic Medicine Service"
+    df_summary["Collection method"] = "clinical testing"
+    df_summary["Allele origin"] = "germline"
+    df_summary["Affected status"] = "yes"
 
     return df_summary, does_name_pass
 
@@ -115,9 +116,16 @@ def get_included_fields(filename: str) -> pd.DataFrame:
     df = pd.read_excel(filename, sheet_name="included",
                        usecols=f"A:{interpreted_col}",
                        nrows=num_variants)
-    df_included = df[["CHROM", "POS", "REF", "ALT", "HGVSc", "Consequence",
-                      "Interpreted", "Comment"]].copy()
+    df_included = df[["CHROM", "POS", "REF", "ALT", "SYMBOL", "HGVSc",
+                      "Consequence", "Interpreted", "Comment"]].copy()
     df_included["Interpreted"] = df_included["Interpreted"].str.lower()
+    df_included.rename(columns={"SYMBOL": "Gene", "POS": "Start"},
+                       inplace=True)
+    df_included['Local ID'] = ""
+    df_included['Linking ID'] = ""
+    df_included = df_included[["Local ID", "Linking ID", "Gene",
+                               "CHROM", "Start", "REF", "ALT", "HGVSc",
+                               "Consequence", "Interpreted", "Comment"]]
     return df_included
 
 
