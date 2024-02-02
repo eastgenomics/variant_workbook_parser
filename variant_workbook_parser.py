@@ -1,6 +1,7 @@
 import argparse
 import re
 from pathlib import Path
+import time
 import numpy as np
 from openpyxl import load_workbook
 import pandas as pd
@@ -78,22 +79,24 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
         does_name_pass = check_sample_name(instrumentID, sample_ID,
                                            batchID, testcode,
                                            probesetID, filename)
-    d = {"instrumentID": instrumentID,
-         "specimenID": sample_ID,
-         "batchID": batchID,
-         "test code": testcode,
-         "probesetID": probesetID,
-         "CI": new_CI,
-         "panel": panel,
-         "ref_genome": ref_genome,
-         "date": date}
+    d = {"Instrument ID": instrumentID,
+         "Specimen ID": sample_ID,
+         "Batch ID": batchID,
+         "Test code": testcode,
+         "Probeset ID": probesetID,
+         "Preferred condition name": new_CI,
+         "Panel": panel,
+         "Ref_genome": ref_genome,
+         "Date last evaluated": date}
     df_summary = pd.DataFrame([d])
-    df_summary['date'] = pd.to_datetime(df_summary['date'])
+    df_summary['Date last evaluated'] = pd.to_datetime(df_summary['Date last evaluated'])
     df_summary["Organisation"] = "Cambridge Genomics Laboratory"
     df_summary["Institution"] = "East Genomic Laboratory Hub, NHS Genomic Medicine Service"
     df_summary["Collection method"] = "clinical testing"
     df_summary["Allele origin"] = "germline"
     df_summary["Affected status"] = "yes"
+    df_summary["Submission ID"] = ""
+    df_summary["Accession ID"] = ""
 
     return df_summary, does_name_pass
 
@@ -119,13 +122,16 @@ def get_included_fields(filename: str) -> pd.DataFrame:
     df_included = df[["CHROM", "POS", "REF", "ALT", "SYMBOL", "HGVSc",
                       "Consequence", "Interpreted", "Comment"]].copy()
     df_included["Interpreted"] = df_included["Interpreted"].str.lower()
-    df_included.rename(columns={"SYMBOL": "Gene", "POS": "Start"},
+    df_included.rename(columns={"CHROM": "Chromosome", "SYMBOL": "Gene symbol",
+                                "POS": "Start", "REF": "Reference allele",
+                                "ALT": "Alternate allele"},
                        inplace=True)
     df_included['Local ID'] = ""
-    df_included['Linking ID'] = ""
-    df_included = df_included[["Local ID", "Linking ID", "Gene",
-                               "CHROM", "Start", "REF", "ALT", "HGVSc",
-                               "Consequence", "Interpreted", "Comment"]]
+    for row in range(df_included.shape[0]):
+        clk_id = time.CLOCK_REALTIME
+        unique_id = time.clock_gettime_ns(clk_id)
+        df_included.loc[row, "Local ID"] = f"uid_{unique_id}"
+    df_included["Linking ID"] = df_included["Local ID"]
     return df_included
 
 
@@ -148,7 +154,7 @@ def get_report_fields(filename: str) -> pd.DataFrame:
         ("Known inheritance", "C6"),
         ("Prevalence", "C7"),
         ("HGVSc", "C3"),
-        ("Final Classification", "C26"),
+        ("Germline classification", "C26"),
         ("PVS1", "H9"),
         ("PVS1_evidence", "C9"),
         ("PS1", "H10"),
@@ -224,6 +230,31 @@ def get_report_fields(filename: str) -> pd.DataFrame:
             if df_report.isnull().iloc[row, column]:
                 df_report.iloc[row, column + 1] = np.nan
 
+    # getting comment on classification for clinvar submissiion
+    matched_strength = [("PVS", "Very Strong"),
+                        ("PS", "Strong"),
+                        ("PM", "Moderate"),
+                        ("PP", "Supporting"),
+                        ("BS", "Supporting"),
+                        ("BA", "Stand-Alone"),
+                        ("BP", "Supporting")
+                        ]
+    df_report["Comment on classification"] = ""
+    for row in range(df_report.shape[0]):
+        evidence = []
+        for column in range(5, df_report.shape[1]-1, 2):
+            if not df_report.isnull().iloc[row, column]:
+                evidence.append([df_report.columns[column],
+                                 df_report.iloc[row, column]])
+        for index, value in enumerate(evidence):
+            for st1, st2 in matched_strength:
+                if st1 in value[0] and st2 == value[1]:
+                    evidence[index][1] = ""
+        evidence_pair = []
+        for e in evidence:
+            evidence_pair.append('_'.join(e).rstrip("_"))
+        comment_on_classification = ','.join(evidence_pair)
+        df_report.loc[row, "Comment on classification"] = comment_on_classification
     return df_report
 
 
@@ -340,6 +371,21 @@ def main():
                 df_merged = pd.merge(df_included, df_summary, how="cross")
                 df_final = pd.merge(df_merged, df_report, on="HGVSc",
                                     how="left")
+                df_final = df_final[['Local ID', 'Linking ID', 'Gene symbol',
+                                     'Chromosome', 'Start', 'Reference allele', 'Alternate allele',
+                                     'Preferred condition name', 'Germline classification', 'Date last evaluated',
+                                     'Comment on classification', 'Collection method', 'Allele origin', 'Affected status',
+                                     'HGVSc', 'Consequence', 'Interpreted', 'Comment', 'Instrument ID', 'Specimen ID',
+                                     'Batch ID', 'Test code', 'Probeset ID', 'Panel', 'Ref_genome', 'Organisation',
+                                     'Institution', 'Associated disease', 'Known inheritance', 'Prevalence', 'PVS1',
+                                     'PVS1_evidence', 'PS1', 'PS1_evidence', 'PS2', 'PS2_evidence', 'PS3', 'PS3_evidence',
+                                     'PS4', 'PS4_evidence', 'PM1', 'PM1_evidence', 'PM2', 'PM2_evidence', 'PM3',
+                                     'PM3_evidence', 'PM4', 'PM4_evidence', 'PM5', 'PM5_evidence', 'PM6', 'PM6_evidence',
+                                     'PP1', 'PP1_evidence', 'PP2', 'PP2_evidence', 'PP3', 'PP3_evidence', 'PP4',
+                                     'PP4_evidence', 'BS1', 'BS1_evidence', 'BS2', 'BS2_evidence', 'BS3', 'BS3_evidence',
+                                     'BA1', 'BA1_evidence', 'BP2', 'BP2_evidence', 'BP3', 'BP3_evidence', 'BS4',
+                                     'BS4_evidence', 'BP1', 'BP1_evidence', 'BP4', 'BP4_evidence', 'BP5', 'BP5_evidence',
+                                     'BP7', 'BP7_evidence',  'Submission ID', 'Accession ID']]
                 df_final.to_csv(arguments.outdir + Path(filename).stem +
                                 ".csv", index=False)
             else:
