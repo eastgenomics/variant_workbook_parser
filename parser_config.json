@@ -1,0 +1,13 @@
+  {
+    "config_information":{
+        "config_version": "1.0.0"
+    },
+    "info":{
+        "Organisation": "Cambridge Genomics Laboratory",
+        "Institution": "East Genomic Laboratory Hub, NHS Genomic Medicine Service",
+        "Collection method": "clinical testing",
+        "Allele origin": "germline",
+        "Affected status": "yes"       
+    }          
+  }
+
