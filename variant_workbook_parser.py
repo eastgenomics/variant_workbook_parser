@@ -114,7 +114,7 @@ def get_included_fields(filename: str) -> pd.DataFrame:
       data frame from included sheet
     """
     workbook = load_workbook(filename)
-    num_variants = workbook['summary']['C34'].value
+    num_variants = workbook['summary']['C28'].value
     interpreted_col = get_col_letter(workbook["included"], "Interpreted")
     df = pd.read_excel(filename, sheet_name="included",
                        usecols=f"A:{interpreted_col}",
@@ -137,7 +137,7 @@ def get_included_fields(filename: str) -> pd.DataFrame:
 
 def get_report_fields(filename: str) -> pd.DataFrame:
     """
-    Extract data from report sheet(s) of variant workbook
+    Extract data from interpret sheet(s) of variant workbook
 
     Parameters
     ----------
@@ -145,73 +145,73 @@ def get_report_fields(filename: str) -> pd.DataFrame:
 
     Return
     ------
-      data frame from report sheet(s)
+      data frame from interpret sheet(s)
 
     """
     workbook = load_workbook(filename)
     field_cells = [
-        ("Associated disease", "C5"),
-        ("Known inheritance", "C6"),
-        ("Prevalence", "C7"),
+        ("Associated disease", "C4"),
+        ("Known inheritance", "C5"),
+        ("Prevalence", "C6"),
         ("HGVSc", "C3"),
         ("Germline classification", "C26"),
-        ("PVS1", "H9"),
-        ("PVS1_evidence", "C9"),
-        ("PS1", "H10"),
-        ("PS1_evidence", "C10"),
-        ("PS2", "H11"),
-        ("PS2_evidence", "C11"),
-        ("PS3", "H12"),
-        ("PS3_evidence", "C12"),
-        ("PS4", "H13"),
-        ("PS4_evidence", "C13"),
-        ("PM1", "H14"),
-        ("PM1_evidence", "C14"),
-        ("PM2", "H15"),
-        ("PM2_evidence", "C15"),
-        ("PM3", "H16"),
-        ("PM3_evidence", "C16"),
-        ("PM4", "H17"),
-        ("PM4_evidence", "C17"),
-        ("PM5", "H18"),
-        ("PM5_evidence", "C18"),
-        ("PM6", "H19"),
-        ("PM6_evidence", "C19"),
-        ("PP1", "H20"),
-        ("PP1_evidence", "C20"),
-        ("PP2", "H21"),
-        ("PP2_evidence", "C21"),
-        ("PP3", "H22"),
-        ("PP3_evidence", "C22"),
-        ("PP4", "H23"),
-        ("PP4_evidence", "C23"),
-        ("BS1", "K8"),
-        ("BS1_evidence", "C8"),
-        ("BS2", "K11"),
-        ("BS2_evidence", "C11"),
-        ("BS3", "K12"),
-        ("BS3_evidence", "C12"),
-        ("BA1", "K15"),
-        ("BA1_evidence", "C15"),
-        ("BP2", "K16"),
-        ("BP2_evidence", "C16"),
-        ("BP3", "K17"),
-        ("BP3_evidence", "C17"),
-        ("BS4", "K20"),
-        ("BS4_evidence", "C20"),
-        ("BP1", "K21"),
-        ("BP1_evidence", "C21"),
-        ("BP4", "K22"),
-        ("BP4_evidence", "C22"),
-        ("BP5", "K23"),
-        ("BP5_evidence", "C23"),
-        ("BP7", "K24"),
-        ("BP7_evidence", "C24"),
+        ("PVS1", "H10"),
+        ("PVS1_evidence", "C10"),
+        ("PS1", "H11"),
+        ("PS1_evidence", "C11"),
+        ("PS2", "H12"),
+        ("PS2_evidence", "C12"),
+        ("PS3", "H13"),
+        ("PS3_evidence", "C13"),
+        ("PS4", "H14"),
+        ("PS4_evidence", "C14"),
+        ("PM1", "H15"),
+        ("PM1_evidence", "C15"),
+        ("PM2", "H16"),
+        ("PM2_evidence", "C16"),
+        ("PM3", "H17"),
+        ("PM3_evidence", "C17"),
+        ("PM4", "H18"),
+        ("PM4_evidence", "C18"),
+        ("PM5", "H19"),
+        ("PM5_evidence", "C19"),
+        ("PM6", "H20"),
+        ("PM6_evidence", "C20"),
+        ("PP1", "H21"),
+        ("PP1_evidence", "C21"),
+        ("PP2", "H22"),
+        ("PP2_evidence", "C22"),
+        ("PP3", "H23"),
+        ("PP3_evidence", "C23"),
+        ("PP4", "H24"),
+        ("PP4_evidence", "C24"),
+        ("BS1", "K9"),
+        ("BS1_evidence", "C9"),
+        ("BS2", "K12"),
+        ("BS2_evidence", "C12"),
+        ("BS3", "K13"),
+        ("BS3_evidence", "C13"),
+        ("BA1", "K16"),
+        ("BA1_evidence", "C16"),
+        ("BP2", "K17"),
+        ("BP2_evidence", "C17"),
+        ("BP3", "K18"),
+        ("BP3_evidence", "C18"),
+        ("BS4", "K21"),
+        ("BS4_evidence", "C21"),
+        ("BP1", "K22"),
+        ("BP1_evidence", "C22"),
+        ("BP4", "K23"),
+        ("BP4_evidence", "C23"),
+        ("BP5", "K24"),
+        ("BP5_evidence", "C24"),
+        ("BP7", "K25"),
+        ("BP7_evidence", "C25"),
     ]
     col_name = [i[0] for i in field_cells]
     df_report = pd.DataFrame(columns=col_name)
     report_sheets = [
-        idx for idx in workbook.sheetnames if idx.lower().startswith("report")
+        idx for idx in workbook.sheetnames if idx.lower().startswith("interpret")
     ]
 
     for idx, sheet in enumerate(report_sheets):
@@ -304,13 +304,13 @@ def checking_sheets(filename: str) -> bool:
     """
     workbook = load_workbook(filename)
     summary = workbook["summary"]
-    reports = [idx for idx in workbook.sheetnames if idx.lower().startswith("report")]
+    reports = [idx for idx in workbook.sheetnames if idx.lower().startswith("interpret")]
     try:
         assert summary["I16"].value == "Date", f"extra col(s) added in summary of {filename}"
         for sheet in reports:
             report = workbook[sheet]
-            assert report["B26"].value == "Final Classification", f"extra row(s) added in {report.title} of {filename}"
-            assert report["L4"].value == "B_POINTS", f"extra col(s) added in {report.title} of {filename}"
+            assert report["B26"].value == "FINAL ACMG CLASSIFICATION", f"extra row(s) added in {report.title} of {filename}"
+            assert report["L8"].value == "B_POINTS", f"extra col(s) added in {report.title} of {filename}"
         does_sheet_pass = True
     except AssertionError as msg:
         does_sheet_pass = False
