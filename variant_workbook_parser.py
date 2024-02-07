@@ -2,6 +2,7 @@ import argparse
 import re
 from pathlib import Path
 import time
+import json
 import numpy as np
 from openpyxl import load_workbook
 import pandas as pd
@@ -33,7 +34,8 @@ def get_command_line_args() -> argparse.Namespace:
     return args
 
 
-def get_summary_fields(filename: str, unusual_sample_name: bool) \
+def get_summary_fields(filename: str, config_variable: dict,
+                       unusual_sample_name: bool) \
                        -> tuple[pd.DataFrame, bool]:
     """
     Extract data from summary sheet of variant workbook
@@ -41,6 +43,7 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
     Parameters
     ----------
       variant workbook file name
+      dict from config file
       boolean for unusual_sample_name
 
     Returns
@@ -90,11 +93,11 @@ def get_summary_fields(filename: str, unusual_sample_name: bool) \
          "Date last evaluated": date}
     df_summary = pd.DataFrame([d])
     df_summary['Date last evaluated'] = pd.to_datetime(df_summary['Date last evaluated'])
-    df_summary["Organisation"] = "Cambridge Genomics Laboratory"
-    df_summary["Institution"] = "East Genomic Laboratory Hub, NHS Genomic Medicine Service"
-    df_summary["Collection method"] = "clinical testing"
-    df_summary["Allele origin"] = "germline"
-    df_summary["Affected status"] = "yes"
+    df_summary["Organisation"] = config_variable["info"]["Organisation"]
+    df_summary["Institution"] = config_variable["info"]["Institution"]
+    df_summary["Collection method"] = config_variable["info"]["Collection method"]
+    df_summary["Allele origin"] = config_variable["info"]["Allele origin"]
+    df_summary["Affected status"] = config_variable["info"]["Affected status"]
     df_summary["Submission ID"] = ""
     df_summary["Accession ID"] = ""
 
@@ -357,13 +360,14 @@ def main():
     arguments = get_command_line_args()
     input_file = arguments.input
     unusual_sample_name = arguments.unusual_sample_name
-
+    with open('parser_config.json') as f:
+        config_variable = json.load(f)
     # extract fields from variant workbooks as df and merged
     for filename in input_file:
         print("Running", filename)
         does_sheet_pass = checking_sheets(filename)
         if does_sheet_pass:
-            df_summary, does_name_pass = get_summary_fields(filename,
+            df_summary, does_name_pass = get_summary_fields(filename, config_variable,
                                                             unusual_sample_name)
             if does_name_pass:
                 df_included = get_included_fields(filename)
