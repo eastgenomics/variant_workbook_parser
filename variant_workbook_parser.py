@@ -36,7 +36,7 @@ def get_command_line_args() -> argparse.Namespace:
 
 def get_summary_fields(filename: str, config_variable: dict,
                        unusual_sample_name: bool) \
-                       -> tuple[pd.DataFrame, bool]:
+                       -> tuple[pd.DataFrame, str]:
     """
     Extract data from summary sheet of variant workbook
 
@@ -49,7 +49,7 @@ def get_summary_fields(filename: str, config_variable: dict,
     Returns
     -------
       data frame from summary sheet
-      boolean
+      str for error message
     """
     workbook = load_workbook(filename)
     sampleID = workbook["summary"]["B1"].value
@@ -77,11 +77,11 @@ def get_summary_fields(filename: str, config_variable: dict,
             ref_genome = workbook["summary"][f"B{cell.row}"].value
 
     # checking sample naming
-    does_name_pass = True
+    error_msg = None
     if not unusual_sample_name:
-        does_name_pass = check_sample_name(instrumentID, sample_ID,
-                                           batchID, testcode,
-                                           probesetID, filename)
+        error_msg = check_sample_name(instrumentID, sample_ID,
+                                      batchID, testcode,
+                                      probesetID)
     d = {"Instrument ID": instrumentID,
          "Specimen ID": sample_ID,
          "Batch ID": batchID,
@@ -92,16 +92,18 @@ def get_summary_fields(filename: str, config_variable: dict,
          "Ref_genome": ref_genome,
          "Date last evaluated": date}
     df_summary = pd.DataFrame([d])
-    df_summary['Date last evaluated'] = pd.to_datetime(df_summary['Date last evaluated'])
+    df_summary['Date last evaluated'] = pd.to_datetime(df_summary
+                                                       ['Date last evaluated'])
     df_summary["Organisation"] = config_variable["info"]["Organisation"]
     df_summary["Institution"] = config_variable["info"]["Institution"]
-    df_summary["Collection method"] = config_variable["info"]["Collection method"]
+    df_summary["Collection method"] = config_variable["info"] \
+                                      ["Collection method"]
     df_summary["Allele origin"] = config_variable["info"]["Allele origin"]
     df_summary["Affected status"] = config_variable["info"]["Affected status"]
-    df_summary["Submission ID"] = ""
-    df_summary["Accession ID"] = ""
+    df_summary["Submission ID"] = np.nan
+    df_summary["Accession ID"] = np.nan
 
-    return df_summary, does_name_pass
+    return df_summary, error_msg
 
 
 def get_included_fields(filename: str) -> pd.DataFrame:
@@ -117,14 +119,15 @@ def get_included_fields(filename: str) -> pd.DataFrame:
       data frame from included sheet
     """
     workbook = load_workbook(filename)
-    num_variants = workbook['summary']['C28'].value
+    num_variants = workbook['summary']['C34'].value
     interpreted_col = get_col_letter(workbook["included"], "Interpreted")
     df = pd.read_excel(filename, sheet_name="included",
                        usecols=f"A:{interpreted_col}",
                        nrows=num_variants)
     df_included = df[["CHROM", "POS", "REF", "ALT", "SYMBOL", "HGVSc",
                       "Consequence", "Interpreted", "Comment"]].copy()
-    df_included["Interpreted"] = df_included["Interpreted"].str.lower()
+    if len(df_included["Interpreted"].value_counts()) > 0:
+        df_included["Interpreted"] = df_included["Interpreted"].str.lower()
     df_included.rename(columns={"CHROM": "Chromosome", "SYMBOL": "Gene symbol",
                                 "POS": "Start", "REF": "Reference allele",
                                 "ALT": "Alternate allele"},
@@ -135,20 +138,23 @@ def get_included_fields(filename: str) -> pd.DataFrame:
         unique_id = time.clock_gettime_ns(clk_id)
         df_included.loc[row, "Local ID"] = f"uid_{unique_id}"
     df_included["Linking ID"] = df_included["Local ID"]
+
     return df_included
 
 
-def get_report_fields(filename: str) -> pd.DataFrame:
+def get_report_fields(filename: str, df_included: pd.DataFrame) -> tuple[pd.DataFrame, str]:
     """
     Extract data from interpret sheet(s) of variant workbook
 
     Parameters
     ----------
       variant workbook file name
+      data frame from included sheet
 
     Return
     ------
       data frame from interpret sheet(s)
+      str for error message
 
     """
     workbook = load_workbook(filename)
@@ -219,51 +225,55 @@ def get_report_fields(filename: str) -> pd.DataFrame:
 
     for idx, sheet in enumerate(report_sheets):
         for field, cell in field_cells:
-            df_report.loc[idx, field] = workbook[sheet][cell].value
+            if workbook[sheet][cell].value is not None:
+                df_report.loc[idx, field] = workbook[sheet][cell].value
+    error_msg = None
+    if not df_report.empty:
+        error_msg = check_interpret_table(df_report, df_included)
+    if not error_msg:
+        # put strength as nan if it is 'NA'
+        for row in range(df_report.shape[0]):
+            for column in range(5, df_report.shape[1], 2):
+                if df_report.iloc[row, column] == "NA":
+                    df_report.iloc[row, column] = np.nan
 
-    # put strength as nan if it is 'NA'
-    for row in range(df_report.shape[0]):
-        for column in range(5, df_report.shape[1], 2):
-            if df_report.iloc[row, column] == "NA":
-                df_report.iloc[row, column] = np.nan
+        # removing evidence value if no strength
+        for row in range(df_report.shape[0]):
+            for column in range(5, df_report.shape[1], 2):
+                if df_report.isnull().iloc[row, column]:
+                    df_report.iloc[row, column + 1] = np.nan
 
-    # removing evidence value if no strength
-    for row in range(df_report.shape[0]):
-        for column in range(5, df_report.shape[1], 2):
-            if df_report.isnull().iloc[row, column]:
-                df_report.iloc[row, column + 1] = np.nan
+        # getting comment on classification for clinvar submission
+        matched_strength = [("PVS", "Very Strong"),
+                            ("PS", "Strong"),
+                            ("PM", "Moderate"),
+                            ("PP", "Supporting"),
+                            ("BS", "Supporting"),
+                            ("BA", "Stand-Alone"),
+                            ("BP", "Supporting")
+                            ]
+        df_report["Comment on classification"] = ""
+        for row in range(df_report.shape[0]):
+            evidence = []
+            for column in range(5, df_report.shape[1]-1, 2):
+                if not df_report.isnull().iloc[row, column]:
+                    evidence.append([df_report.columns[column],
+                                     df_report.iloc[row, column]])
+            for index, value in enumerate(evidence):
+                for st1, st2 in matched_strength:
+                    if st1 in value[0] and st2 == value[1]:
+                        evidence[index][1] = ""
+            evidence_pair = []
+            for e in evidence:
+                evidence_pair.append('_'.join(e).rstrip("_"))
+            comment_on_classification = ','.join(evidence_pair)
+            df_report.loc[row, "Comment on classification"] = comment_on_classification
 
-    # getting comment on classification for clinvar submissiion
-    matched_strength = [("PVS", "Very Strong"),
-                        ("PS", "Strong"),
-                        ("PM", "Moderate"),
-                        ("PP", "Supporting"),
-                        ("BS", "Supporting"),
-                        ("BA", "Stand-Alone"),
-                        ("BP", "Supporting")
-                        ]
-    df_report["Comment on classification"] = ""
-    for row in range(df_report.shape[0]):
-        evidence = []
-        for column in range(5, df_report.shape[1]-1, 2):
-            if not df_report.isnull().iloc[row, column]:
-                evidence.append([df_report.columns[column],
-                                 df_report.iloc[row, column]])
-        for index, value in enumerate(evidence):
-            for st1, st2 in matched_strength:
-                if st1 in value[0] and st2 == value[1]:
-                    evidence[index][1] = ""
-        evidence_pair = []
-        for e in evidence:
-            evidence_pair.append('_'.join(e).rstrip("_"))
-        comment_on_classification = ','.join(evidence_pair)
-        df_report.loc[row, "Comment on classification"] = comment_on_classification
-    return df_report
+    return df_report, error_msg
 
 
 def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
-                      testcode: str, probesetID: str,
-                      filename: str) -> bool:
+                      testcode: str, probesetID: str) -> str:
     """
     checking if individual parts of sample name have
     expected naming format
@@ -275,25 +285,26 @@ def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
 
     Return
     ------
-      boolean
+      str for error message
     """
-    print("Checking the naming format")
     try:
-        assert re.match(r"^\d{9}$", instrumentID), (f"Unusual name for instrumentID in {filename}")
-        assert re.match(r"^\d{5}[A-Z]\d{4}$", sample_ID), f"Unusual sampleID in {filename}"
-        assert re.match(r"^\d{2}[A-Z]{5}\d{1,}$", batchID), f"Unusual batchID in {filename}"
-        assert re.match(r"^\d{4}$", testcode), f"Unusual testcode in {filename}"
-        assert 0 < len(probesetID) < 20, f"probesetID in {filename} is too long/short"
-        assert probesetID.isalnum() and not probesetID.isalpha(), f"Unusual probesetID in {filename}"
-        does_name_pass = True
+        assert re.match(r"^\d{9}$", instrumentID), \
+        "Unusual name for instrumentID"
+        assert re.match(r"^\d{5}[A-Z]\d{4}$", sample_ID), "Unusual sampleID"
+        assert re.match(r"^\d{2}[A-Z]{5}\d{1,}$", batchID), "Unusual batchID"
+        assert re.match(r"^\d{4}$", testcode), "Unusual testcode in"
+        assert 0 < len(probesetID) < 20, "probesetID is too long/short"
+        assert probesetID.isalnum() and not probesetID.isalpha(), \
+        "Unusual probesetID"
+        error_msg = None
     except AssertionError as msg:
-        does_name_pass = False
+        error_msg = str(msg)
         print(msg)
 
-    return does_name_pass
+    return error_msg
 
 
-def checking_sheets(filename: str) -> bool:
+def checking_sheets(filename: str) -> str:
     """
     check if extra row(s)/col(s) are added in the sheets
 
@@ -303,23 +314,26 @@ def checking_sheets(filename: str) -> bool:
 
     Return
     ------
-      boolean
+      str for error message
     """
     workbook = load_workbook(filename)
     summary = workbook["summary"]
     reports = [idx for idx in workbook.sheetnames if idx.lower().startswith("interpret")]
     try:
-        assert summary["I16"].value == "Date", f"extra col(s) added in summary of {filename}"
+        assert summary["I16"].value == "Date", \
+        "extra col(s) added or change(s) done in summary sheet"
         for sheet in reports:
             report = workbook[sheet]
-            assert report["B26"].value == "FINAL ACMG CLASSIFICATION", f"extra row(s) added in {report.title} of {filename}"
-            assert report["L8"].value == "B_POINTS", f"extra col(s) added in {report.title} of {filename}"
-        does_sheet_pass = True
+            assert report["B26"].value == "FINAL ACMG CLASSIFICATION", \
+            f"extra row(s) added or change(s) done in {report.title}"
+            assert report["L8"].value == "B_POINTS", \
+            f"extra col(s) added or change(s) done in {report.title}"
+        error_msg = None
     except AssertionError as msg:
-        does_sheet_pass = False
+        error_msg = str(msg)
         print(msg)
 
-    return does_sheet_pass
+    return error_msg
 
 
 def get_col_letter(worksheet: object, col_name: str) -> str:
@@ -335,6 +349,7 @@ def get_col_letter(worksheet: object, col_name: str) -> str:
     -------
         str for column letter for specific column name
     """
+    col_letter = None
     for column_cell in worksheet.iter_cols(1, worksheet.max_column):
         if column_cell[0].value == col_name:
             col_letter = column_cell[0].column_letter
@@ -342,7 +357,7 @@ def get_col_letter(worksheet: object, col_name: str) -> str:
     return col_letter
 
 
-def write_txt_file(output_dir: str, filename: str) -> None:
+def write_txt_file(output_dir: str, filename: str, msg: str) -> None:
     """
     write txt file output
 
@@ -350,11 +365,80 @@ def write_txt_file(output_dir: str, filename: str) -> None:
     ----------
       variant workbook file name
       str for output dir
+      str for error message
     """
     with open(output_dir + 'workbooks_fail_to_parse.txt', 'a') as file:
-        file.write(filename+"\n")
+        file.write(filename+" "+msg+"\n")
         file.close()
 
+
+def check_interpret_table(df_report: pd.DataFrame, df_included: pd.DataFrame) -> str:
+    """
+    check if ACMG classification and HGVSc are correctly
+    filled in in the interpret table(s)
+
+    Parameters
+    ----------
+      df from interpret sheet(s)
+      df from included sheet
+
+    Return
+    ------
+      str for error message
+    """
+    row_index = df_report[df_report.isnull()].index.tolist()
+    error_msg = []
+    for row in row_index:
+        try:
+            assert df_report.loc[row, "Germline classification"] is not np.nan, \
+            f"empty ACMG classification in interpret_{row+1}"
+            assert df_report.loc[row, "HGVSc"] is not np.nan, \
+            f"empty HGVSc in interpret_{row+1}"
+            assert df_report.loc[row, "HGVSc"] in list(df_included['HGVSc']), \
+            f"HGVSc in interpret_{row+1} does not match with that in included sheet"
+
+        except AssertionError as msg:
+            error_msg.append(str(msg))
+            print(msg)
+    error_msg = "".join(error_msg)
+
+    return error_msg
+
+
+def check_interpreted_col(df: pd.DataFrame) -> str:
+    """
+    check if interpreted col in included sheet
+    is correctly filled in
+
+    Parameters
+    ----------
+    merged df
+
+    Return
+    ------
+      str for error message
+    """
+    row_yes = df[df['Interpreted'] == 'yes'].index.tolist()
+    #row_no = df[df['Interpreted'] == 'no'].index.tolist()
+    error_msg = []
+    for row in range(df.shape[0]):
+        if row in row_yes:
+            try:
+                assert df.loc[row, "Germline classification"] is not np.nan, \
+                f"Wrong interpreted column in row {row} of included sheet"
+            except AssertionError as msg:
+                error_msg.append(str(msg))
+                print(msg)
+        else:
+            try:
+                assert df.loc[row, "Germline classification"] is np.nan, \
+                f"Wrong interpreted column in row {row} of included sheet"
+            except AssertionError as msg:
+                error_msg.append(str(msg))
+                print(msg)
+    error_msg = " ".join(error_msg)
+
+    return error_msg
 
 def main():
     arguments = get_command_line_args()
@@ -362,40 +446,58 @@ def main():
     unusual_sample_name = arguments.unusual_sample_name
     with open('parser_config.json') as f:
         config_variable = json.load(f)
+
     # extract fields from variant workbooks as df and merged
     for filename in input_file:
         print("Running", filename)
-        does_sheet_pass = checking_sheets(filename)
-        if does_sheet_pass:
-            df_summary, does_name_pass = get_summary_fields(filename, config_variable,
+        error_msg_sheet = checking_sheets(filename)
+        if not error_msg_sheet:
+            df_summary, error_msg_name = get_summary_fields(filename, config_variable,
                                                             unusual_sample_name)
-            if does_name_pass:
+            if not error_msg_name:
                 df_included = get_included_fields(filename)
-                df_report = get_report_fields(filename)
-                df_merged = pd.merge(df_included, df_summary, how="cross")
-                df_final = pd.merge(df_merged, df_report, on="HGVSc",
-                                    how="left")
-                df_final = df_final[['Local ID', 'Linking ID', 'Gene symbol',
-                                     'Chromosome', 'Start', 'Reference allele', 'Alternate allele',
-                                     'Preferred condition name', 'Germline classification', 'Date last evaluated',
-                                     'Comment on classification', 'Collection method', 'Allele origin', 'Affected status',
-                                     'HGVSc', 'Consequence', 'Interpreted', 'Comment', 'Instrument ID', 'Specimen ID',
-                                     'Batch ID', 'Test code', 'Probeset ID', 'Panel', 'Ref_genome', 'Organisation',
-                                     'Institution', 'Associated disease', 'Known inheritance', 'Prevalence', 'PVS1',
-                                     'PVS1_evidence', 'PS1', 'PS1_evidence', 'PS2', 'PS2_evidence', 'PS3', 'PS3_evidence',
-                                     'PS4', 'PS4_evidence', 'PM1', 'PM1_evidence', 'PM2', 'PM2_evidence', 'PM3',
-                                     'PM3_evidence', 'PM4', 'PM4_evidence', 'PM5', 'PM5_evidence', 'PM6', 'PM6_evidence',
-                                     'PP1', 'PP1_evidence', 'PP2', 'PP2_evidence', 'PP3', 'PP3_evidence', 'PP4',
-                                     'PP4_evidence', 'BS1', 'BS1_evidence', 'BS2', 'BS2_evidence', 'BS3', 'BS3_evidence',
-                                     'BA1', 'BA1_evidence', 'BP2', 'BP2_evidence', 'BP3', 'BP3_evidence', 'BS4',
-                                     'BS4_evidence', 'BP1', 'BP1_evidence', 'BP4', 'BP4_evidence', 'BP5', 'BP5_evidence',
-                                     'BP7', 'BP7_evidence',  'Submission ID', 'Accession ID']]
-                df_final.to_csv(arguments.outdir + Path(filename).stem +
-                                ".csv", index=False)
+                if df_included["Interpreted"].isna().sum() == 0:
+                    df_report, error_msg_table = get_report_fields(filename, df_included)
+                    if not error_msg_table:
+                        if not df_included.empty:
+                            df_merged = pd.merge(df_included, df_summary, how="cross")
+                            empty_workbook = False
+                        else:
+                            df_merged = pd.concat([df_summary, df_included], axis=1)
+                            empty_workbook = True
+                        df_final = pd.merge(df_merged, df_report, on="HGVSc",
+                                            how="left")
+                        error_msg_interpreted = check_interpreted_col(df_final)
+                        if not error_msg_interpreted:
+                            df_final = df_final[['Local ID', 'Linking ID', 'Gene symbol',
+                                                 'Chromosome', 'Start', 'Reference allele', 'Alternate allele',
+                                                 'Preferred condition name', 'Germline classification', 'Date last evaluated',
+                                                 'Comment on classification', 'Collection method', 'Allele origin', 'Affected status',
+                                                 'HGVSc', 'Consequence', 'Interpreted', 'Comment', 'Instrument ID', 'Specimen ID',
+                                                 'Batch ID', 'Test code', 'Probeset ID', 'Panel', 'Ref_genome', 'Organisation',
+                                                 'Institution', 'Associated disease', 'Known inheritance', 'Prevalence', 'PVS1',
+                                                 'PVS1_evidence', 'PS1', 'PS1_evidence', 'PS2', 'PS2_evidence', 'PS3', 'PS3_evidence',
+                                                 'PS4', 'PS4_evidence', 'PM1', 'PM1_evidence', 'PM2', 'PM2_evidence', 'PM3',
+                                                 'PM3_evidence', 'PM4', 'PM4_evidence', 'PM5', 'PM5_evidence', 'PM6', 'PM6_evidence',
+                                                 'PP1', 'PP1_evidence', 'PP2', 'PP2_evidence', 'PP3', 'PP3_evidence', 'PP4',
+                                                 'PP4_evidence', 'BS1', 'BS1_evidence', 'BS2', 'BS2_evidence', 'BS3', 'BS3_evidence',
+                                                 'BA1', 'BA1_evidence', 'BP2', 'BP2_evidence', 'BP3', 'BP3_evidence', 'BS4',
+                                                 'BS4_evidence', 'BP1', 'BP1_evidence', 'BP4', 'BP4_evidence', 'BP5', 'BP5_evidence',
+                                                 'BP7', 'BP7_evidence',  'Submission ID', 'Accession ID']]
+                            if empty_workbook:
+                                df_final.fillna('zero_variant', inplace=True)
+                            df_final.to_csv(arguments.outdir + Path(filename).stem + ".csv", index=False)
+                        else:
+                            write_txt_file(arguments.outdir, filename, error_msg_interpreted)
+                    else:
+                        write_txt_file(arguments.outdir, filename, error_msg_table)
+                else:
+                    print("Interpreted column in included sheet needs to be fixed")
+                    write_txt_file(arguments.outdir, filename, "Interpreted column in included sheet needs to be fixed")
             else:
-                write_txt_file(arguments.outdir, filename)
+                write_txt_file(arguments.outdir, filename, error_msg_name)
         else:
-            write_txt_file(arguments.outdir, filename)
+            write_txt_file(arguments.outdir, filename, error_msg_sheet)
     print("Done")
 
 
