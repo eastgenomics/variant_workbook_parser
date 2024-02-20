@@ -1,5 +1,7 @@
 import argparse
 import re
+import os
+import sys
 from pathlib import Path
 import time
 import uuid
@@ -104,6 +106,17 @@ def get_summary_fields(filename: str, config_variable: dict,
                                       ["Collection method"]
     df_summary["Allele origin"] = config_variable["info"]["Allele origin"]
     df_summary["Affected status"] = config_variable["info"]["Affected status"]
+
+    # getting the folder name of workbook
+    # the folder name should return designated folder for either CUH or NUH
+    folder_name = get_folder(filename)
+    if folder_name == config_variable["info"]["CUH folder"]:
+        df_summary["Organisation ID"] = 288359
+    elif folder_name == config_variable["info"]["NUH folder"]:
+        df_summary["Organisation ID"] = 509428
+    else:
+        print("Running for the wrong folder")
+        sys.exit(1)
 
     return df_summary, error_msg
 
@@ -444,6 +457,20 @@ def check_interpreted_col(df: pd.DataFrame) -> str:
 
     return error_msg
 
+def get_folder(filename: str) -> str:
+    """
+    get the folder of input file
+    Parameters:
+    ----------
+      str for input finame 
+
+    Return:
+      str for folder name
+    """
+    folder = os.path.basename(os.path.normpath(os.path.dirname(filename)))
+    print(folder)
+    return folder
+
 def main():
     arguments = get_command_line_args()
     input_file = arguments.input
@@ -473,7 +500,7 @@ def main():
                                             how="left")
                         error_msg_interpreted = check_interpreted_col(df_final)
                         if not error_msg_interpreted:
-                            df_final = df_final[['Local ID', 'Linking ID', 'Gene symbol',
+                            df_final = df_final[['Local ID', 'Linking ID', 'Organisation ID', 'Gene symbol',
                                                  'Chromosome', 'Start', 'Reference allele', 'Alternate allele',
                                                  'Preferred condition name', 'Germline classification', 'Date last evaluated',
                                                  'Comment on classification', 'Collection method', 'Allele origin', 'Affected status',
@@ -493,7 +520,7 @@ def main():
                             else:
                                 if (df_final.Interpreted == 'yes').sum() > 0:
                                     df_clinvar = df_final[df_final["Interpreted"] == 'yes']
-                                    df_clinvar = df_clinvar[['Local ID', 'Linking ID', 'Gene symbol', 'Chromosome', 'Start',
+                                    df_clinvar = df_clinvar[['Local ID', 'Linking ID',  'Organisation ID', 'Gene symbol', 'Chromosome', 'Start',
                                                              'Reference allele', 'Alternate allele', 'Preferred condition name',
                                                              'Germline classification', 'Date last evaluated', 'Comment on classification',
                                                              'Collection method', 'Allele origin', 'Affected status',
