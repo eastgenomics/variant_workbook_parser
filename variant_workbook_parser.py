@@ -9,7 +9,7 @@ from openpyxl import load_workbook
 import pandas as pd
 
 PARSED_FILE = "workbooks_parsed_all_variants.txt"
-CLINVAR_FILE = "workbook_parsed_clinvar_variants.txt"
+CLINVAR_FILE = "workbooks_parsed_clinvar_variants.txt"
 FAILED_FILE = "workbooks_fail_to_parse.txt"
 
 def get_command_line_args() -> argparse.Namespace:
@@ -497,9 +497,9 @@ def main():
                                                              'Germline classification', 'Date last evaluated', 'Comment on classification',
                                                              'Collection method', 'Allele origin', 'Affected status',
                                                              'HGVSc', 'Consequence', 'Interpreted', 'Instrument ID', 'Specimen ID']]
-                                    df_clinvar.to_csv(arguments.outdir + Path(filename).stem + "_clinvar.csv", index=False)
+                                    df_clinvar.to_csv(arguments.outdir + Path(filename).stem + "_clinvar_variants.csv", index=False)
                                     write_txt_file(CLINVAR_FILE, arguments.outdir, filename, "")
-                            df_final.to_csv(arguments.outdir + Path(filename).stem + ".csv", index=False)
+                            df_final.to_csv(arguments.outdir + Path(filename).stem + "_all_variants.csv", index=False)
                             write_txt_file(PARSED_FILE, arguments.outdir, filename, "")
                         else:
                             write_txt_file(FAILED_FILE, arguments.outdir, filename, error_msg_interpreted)
