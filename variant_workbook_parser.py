@@ -111,9 +111,9 @@ def get_summary_fields(filename: str, config_variable: dict,
     # the folder name should return designated folder for either CUH or NUH
     folder_name = get_folder(filename)
     if folder_name == config_variable["info"]["CUH folder"]:
-        df_summary["Organisation ID"] = 288359
+        df_summary["Organisation ID"] = config_variable["info"]["CUH org ID"]
     elif folder_name == config_variable["info"]["NUH folder"]:
-        df_summary["Organisation ID"] = 509428
+        df_summary["Organisation ID"] = config_variable["info"]["NUH org ID"]
     else:
         print("Running for the wrong folder")
         sys.exit(1)

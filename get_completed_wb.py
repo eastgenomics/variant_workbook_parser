@@ -18,7 +18,7 @@ def get_command_line_args() -> argparse.Namespace:
         required=True
     )
     parser.add_argument(
-        "--outdir", "--o", help="dir to save output(s)", default="./"
+        "--outdir", "--o", help="dir to save output(s)", required=True
     )
     parser.add_argument(
         "--folder", "--f", help="folder to check", required=True
