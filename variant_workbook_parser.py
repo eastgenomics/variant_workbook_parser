@@ -2,11 +2,15 @@ import argparse
 import re
 from pathlib import Path
 import time
+import uuid
 import json
 import numpy as np
 from openpyxl import load_workbook
 import pandas as pd
 
+PARSED_FILE = "workbooks_parsed_all_variants.txt"
+CLINVAR_FILE = "workbook_parsed_clinvar_variants.txt"
+FAILED_FILE = "workbooks_fail_to_parse.txt"
 
 def get_command_line_args() -> argparse.Namespace:
     """
@@ -100,8 +104,6 @@ def get_summary_fields(filename: str, config_variable: dict,
                                       ["Collection method"]
     df_summary["Allele origin"] = config_variable["info"]["Allele origin"]
     df_summary["Affected status"] = config_variable["info"]["Affected status"]
-    df_summary["Submission ID"] = np.nan
-    df_summary["Accession ID"] = np.nan
 
     return df_summary, error_msg
 
@@ -134,9 +136,9 @@ def get_included_fields(filename: str) -> pd.DataFrame:
                        inplace=True)
     df_included['Local ID'] = ""
     for row in range(df_included.shape[0]):
-        clk_id = time.CLOCK_REALTIME
-        unique_id = time.clock_gettime_ns(clk_id)
-        df_included.loc[row, "Local ID"] = f"uid_{unique_id}"
+        unique_id = uuid.uuid1()
+        df_included.loc[row, "Local ID"] = f"uid_{unique_id.time}"
+        time.sleep(0.5)
     df_included["Linking ID"] = df_included["Local ID"]
 
     return df_included
@@ -357,17 +359,18 @@ def get_col_letter(worksheet: object, col_name: str) -> str:
     return col_letter
 
 
-def write_txt_file(output_dir: str, filename: str, msg: str) -> None:
+def write_txt_file(txt_file_name: str, output_dir: str, filename: str, msg: str) -> None:
     """
     write txt file output
 
     Parameters
     ----------
-      variant workbook file name
+      str for output txt file name
       str for output dir
+      variant workbook file name
       str for error message
     """
-    with open(output_dir + 'workbooks_fail_to_parse.txt', 'a') as file:
+    with open(output_dir + txt_file_name, 'a') as file:
         file.write(filename+" "+msg+"\n")
         file.close()
 
@@ -483,21 +486,32 @@ def main():
                                                  'PP4_evidence', 'BS1', 'BS1_evidence', 'BS2', 'BS2_evidence', 'BS3', 'BS3_evidence',
                                                  'BA1', 'BA1_evidence', 'BP2', 'BP2_evidence', 'BP3', 'BP3_evidence', 'BS4',
                                                  'BS4_evidence', 'BP1', 'BP1_evidence', 'BP4', 'BP4_evidence', 'BP5', 'BP5_evidence',
-                                                 'BP7', 'BP7_evidence',  'Submission ID', 'Accession ID']]
+                                                 'BP7', 'BP7_evidence']]
                             if empty_workbook:
                                 df_final.fillna('zero_variant', inplace=True)
+                            else:
+                                if (df_final.Interpreted == 'yes').sum() > 0:
+                                    df_clinvar = df_final[df_final["Interpreted"] == 'yes']
+                                    df_clinvar = df_clinvar[['Local ID', 'Linking ID', 'Gene symbol', 'Chromosome', 'Start',
+                                                             'Reference allele', 'Alternate allele', 'Preferred condition name',
+                                                             'Germline classification', 'Date last evaluated', 'Comment on classification',
+                                                             'Collection method', 'Allele origin', 'Affected status',
+                                                             'HGVSc', 'Consequence', 'Interpreted', 'Instrument ID', 'Specimen ID']]
+                                    df_clinvar.to_csv(arguments.outdir + Path(filename).stem + "_clinvar.csv", index=False)
+                                    write_txt_file(CLINVAR_FILE, arguments.outdir, filename, "")
                             df_final.to_csv(arguments.outdir + Path(filename).stem + ".csv", index=False)
+                            write_txt_file(PARSED_FILE, arguments.outdir, filename, "")
                         else:
-                            write_txt_file(arguments.outdir, filename, error_msg_interpreted)
+                            write_txt_file(FAILED_FILE, arguments.outdir, filename, error_msg_interpreted)
                     else:
-                        write_txt_file(arguments.outdir, filename, error_msg_table)
+                        write_txt_file(FAILED_FILE, arguments.outdir, filename, error_msg_table)
                 else:
                     print("Interpreted column in included sheet needs to be fixed")
-                    write_txt_file(arguments.outdir, filename, "Interpreted column in included sheet needs to be fixed")
+                    write_txt_file(FAILED_FILE, arguments.outdir, filename, "Interpreted column in included sheet needs to be fixed")
             else:
-                write_txt_file(arguments.outdir, filename, error_msg_name)
+                write_txt_file(FAILED_FILE, arguments.outdir, filename, error_msg_name)
         else:
-            write_txt_file(arguments.outdir, filename, error_msg_sheet)
+            write_txt_file(FAILED_FILE, arguments.outdir, filename, error_msg_sheet)
     print("Done")
 
 
