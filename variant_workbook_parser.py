@@ -229,6 +229,7 @@ def get_report_fields(filename: str, df_included: pd.DataFrame) -> tuple[pd.Data
         for field, cell in field_cells:
             if workbook[sheet][cell].value is not None:
                 df_report.loc[idx, field] = workbook[sheet][cell].value
+    df_report.reset_index(drop=True, inplace=True)
     error_msg = None
     if not df_report.empty:
         error_msg = check_interpret_table(df_report, df_included)
@@ -269,7 +270,7 @@ def get_report_fields(filename: str, df_included: pd.DataFrame) -> tuple[pd.Data
             for e in evidence:
                 evidence_pair.append('_'.join(e).rstrip("_"))
             comment_on_classification = ','.join(evidence_pair)
-            df_report.loc[row, "Comment on classification"] = comment_on_classification
+            df_report.iloc[row, df_report.columns.get_loc('Comment on classification')] = comment_on_classification
 
     return df_report, error_msg
 
