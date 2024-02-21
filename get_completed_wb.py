@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 import argparse
 import shutil
 
@@ -38,7 +39,8 @@ def write_txt_file(txt_file_name: str, output_dir: str, filename: str) -> None:
       variant workbook file name
     """
     with open(output_dir + txt_file_name, 'a') as file:
-        file.write(filename + "\n")
+        dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        file.write(dt+" "+filename + "\n")
         file.close()
 
 
