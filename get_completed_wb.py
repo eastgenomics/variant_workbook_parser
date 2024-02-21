@@ -19,10 +19,13 @@ def get_command_line_args() -> argparse.Namespace:
         required=True
     )
     parser.add_argument(
-        "--outdir", "--o", help="dir to save output(s)", required=True
+        "--outdir", "--o", help="dir to where the workbooks are copied into", required=True
     )
     parser.add_argument(
-        "--folder", "--f", help="folder to check", required=True
+        "--folder", "--f", help="folder to check for completed workbooks", required=True
+    )
+    parser.add_argument(
+        "--logdir", "--ld", help="dir to log txt files", default="./"
     )
     args = parser.parse_args()
 
@@ -57,7 +60,7 @@ def main():
                     print("found in", os.path.abspath(root))
                     found = True
             if not found:
-                write_txt_file(FILE_NOT_FOUND, arguments.outdir, line)
+                write_txt_file(FILE_NOT_FOUND, arguments.logdir, line)
 
 
 if __name__ == "__main__":

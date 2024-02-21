@@ -2,6 +2,8 @@ import argparse
 import re
 import os
 import sys
+import glob
+import shutil
 from pathlib import Path
 import time
 from datetime import datetime
@@ -26,11 +28,21 @@ def get_command_line_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--input", "--i", nargs="+", help="input file name(s) to parse",
+        "--indir", "--i", help="input dir of file(s) to parse",
         required=True
     )
     parser.add_argument(
+        "--file", "--f", help="input file(s) to parse",
+        required=False
+    )    
+    parser.add_argument(
         "--outdir", "--o", help="dir to save output(s)", default="./"
+    )
+    parser.add_argument(
+        "--logdir", "--ld", help="dir to log txt files", default="./"
+    )
+    parser.add_argument(
+        "--completed_dir", "--cd", help="dir to log txt files", default="./"
     )
     parser.add_argument(
         "--unusual_sample_name", action="store_true",
@@ -497,15 +509,34 @@ def get_parsed_list(file: str) -> list:
     return parsed_list
 
 
+def check_and_create(dir: str) -> None:
+    """
+    check if a dir exists and create
+    Parameters
+    ----------
+    str for directory
+    """
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
+
 def main():
     arguments = get_command_line_args()
-    input_file = arguments.input
-    if not os.path.exists(arguments.outdir):
-        os.makedirs(arguments.outdir)
+    input_dir = arguments.indir
+    if arguments.file:
+        input_file = glob.glob(input_dir+arguments.file)
+    else:
+        input_file = glob.glob(input_dir+"*.xlsx")
+    check_and_create(arguments.outdir)
+    check_and_create(arguments.completed_dir)
+    check_and_create(arguments.logdir)
+    if not os.path.isfile(arguments.logdir+PARSED_FILE):
+        with open(arguments.logdir+PARSED_FILE, 'w') as file:
+            file.close()
     unusual_sample_name = arguments.unusual_sample_name
     with open('parser_config.json') as f:
         config_variable = json.load(f)
-    parsed_list = get_parsed_list('test_outdir/workbooks_parsed_all_variants.txt')
+    parsed_list = get_parsed_list(arguments.logdir+PARSED_FILE)
     # extract fields from variant workbooks as df and merged
     for filename in input_file:
         print("Running", filename)
@@ -555,20 +586,23 @@ def main():
                                                                  'Collection method', 'Allele origin', 'Affected status',
                                                                  'HGVSc', 'Consequence', 'Interpreted', 'Instrument ID', 'Specimen ID']]
                                         df_clinvar.to_csv(arguments.outdir + Path(filename).stem + "_clinvar_variants.csv", index=False)
-                                        write_txt_file(CLINVAR_FILE, arguments.outdir, filename, "")
+                                        write_txt_file(CLINVAR_FILE, arguments.logdir, filename, "")
                                 df_final.to_csv(arguments.outdir + Path(filename).stem + "_all_variants.csv", index=False)
-                                write_txt_file(PARSED_FILE, arguments.outdir, filename, "")
+                                write_txt_file(PARSED_FILE, arguments.logdir, filename, "")
+                                print(filename)
+                                shutil.move(filename, arguments.completed_dir)
+
                             else:
-                                write_txt_file(FAILED_FILE, arguments.outdir, filename, error_msg_interpreted)
+                                write_txt_file(FAILED_FILE, arguments.logdir, filename, error_msg_interpreted)
                         else:
-                            write_txt_file(FAILED_FILE, arguments.outdir, filename, error_msg_table)
+                            write_txt_file(FAILED_FILE, arguments.logdir, filename, error_msg_table)
                     else:
                         print("Interpreted column in included sheet needs to be fixed")
-                        write_txt_file(FAILED_FILE, arguments.outdir, filename, "Interpreted column in included sheet needs to be fixed")
+                        write_txt_file(FAILED_FILE, arguments.logdir, filename, "Interpreted column in included sheet needs to be fixed")
                 else:
-                    write_txt_file(FAILED_FILE, arguments.outdir, filename, error_msg_name)
+                    write_txt_file(FAILED_FILE, arguments.logdir, filename, error_msg_name)
             else:
-                write_txt_file(FAILED_FILE, arguments.outdir, filename, error_msg_sheet)
+                write_txt_file(FAILED_FILE, arguments.logdir, filename, error_msg_sheet)
     print("Done")
 
 
