@@ -17,6 +17,7 @@ PARSED_FILE = "workbooks_parsed_all_variants.txt"
 CLINVAR_FILE = "workbooks_parsed_clinvar_variants.txt"
 FAILED_FILE = "workbooks_fail_to_parse.txt"
 
+
 def get_command_line_args() -> argparse.Namespace:
     """
     Parse command line arguments
@@ -32,17 +33,16 @@ def get_command_line_args() -> argparse.Namespace:
         required=True
     )
     parser.add_argument(
-        "--file", "--f", help="input file(s) to parse",
-        required=False
-    )    
-    parser.add_argument(
-        "--outdir", "--o", help="dir to save output(s)", default="./"
+        "--file", "--f", nargs='+', help="input file(s) to parse if want to specify"
     )
     parser.add_argument(
-        "--logdir", "--ld", help="dir to log txt files", default="./"
+        "--outdir", "--o", help="dir to save the output csv files", default="./"
     )
     parser.add_argument(
-        "--completed_dir", "--cd", help="dir to log txt files", default="./"
+        "--logdir", "--ld", help="dir to save log txt files", default="./"
+    )
+    parser.add_argument(
+        "--completed_dir", "--cd", help="dir to move the successfully parsed workbooks", default="./"
     )
     parser.add_argument(
         "--unusual_sample_name", action="store_true",
@@ -108,7 +108,7 @@ def get_summary_fields(filename: str, config_variable: dict,
          "Probeset ID": probesetID,
          "Preferred condition name": new_CI,
          "Panel": panel,
-         "Ref_genome": ref_genome,
+         "Ref genome": ref_genome,
          "Date last evaluated": date}
     df_summary = pd.DataFrame([d])
     df_summary['Date last evaluated'] = pd.to_datetime(df_summary
@@ -524,9 +524,13 @@ def main():
     arguments = get_command_line_args()
     input_dir = arguments.indir
     if arguments.file:
-        input_file = glob.glob(input_dir+arguments.file)
+        input_file = []
+        for idx, file in enumerate(arguments.file):
+            input_file.append(glob.glob(input_dir+file)[0])
     else:
         input_file = glob.glob(input_dir+"*.xlsx")
+    if len(input_file) == 0:
+        print("Input file(s) not exist")
     check_and_create(arguments.outdir)
     check_and_create(arguments.completed_dir)
     check_and_create(arguments.logdir)
@@ -565,7 +569,7 @@ def main():
                                                      'Preferred condition name', 'Germline classification', 'Date last evaluated',
                                                      'Comment on classification', 'Collection method', 'Allele origin', 'Affected status',
                                                      'HGVSc', 'Consequence', 'Interpreted', 'Comment', 'Instrument ID', 'Specimen ID',
-                                                     'Batch ID', 'Test code', 'Probeset ID', 'Panel', 'Ref_genome', 'Organisation',
+                                                     'Batch ID', 'Test code', 'Probeset ID', 'Panel', 'Ref genome', 'Organisation',
                                                      'Institution', 'Associated disease', 'Known inheritance', 'Prevalence', 'PVS1',
                                                      'PVS1_evidence', 'PS1', 'PS1_evidence', 'PS2', 'PS2_evidence', 'PS3', 'PS3_evidence',
                                                      'PS4', 'PS4_evidence', 'PM1', 'PM1_evidence', 'PM2', 'PM2_evidence', 'PM3',
@@ -583,13 +587,13 @@ def main():
                                         df_clinvar = df_clinvar[['Local ID', 'Linking ID',  'Organisation ID', 'Gene symbol', 'Chromosome', 'Start',
                                                                  'Reference allele', 'Alternate allele', 'Preferred condition name',
                                                                  'Germline classification', 'Date last evaluated', 'Comment on classification',
-                                                                 'Collection method', 'Allele origin', 'Affected status',
+                                                                 'Collection method', 'Allele origin', 'Affected status', 'Ref genome',
                                                                  'HGVSc', 'Consequence', 'Interpreted', 'Instrument ID', 'Specimen ID']]
                                         df_clinvar.to_csv(arguments.outdir + Path(filename).stem + "_clinvar_variants.csv", index=False)
                                         write_txt_file(CLINVAR_FILE, arguments.logdir, filename, "")
                                 df_final.to_csv(arguments.outdir + Path(filename).stem + "_all_variants.csv", index=False)
                                 write_txt_file(PARSED_FILE, arguments.logdir, filename, "")
-                                print(filename)
+                                print("Successfully parsed", filename)
                                 shutil.move(filename, arguments.completed_dir)
 
                             else:
@@ -603,6 +607,8 @@ def main():
                     write_txt_file(FAILED_FILE, arguments.logdir, filename, error_msg_name)
             else:
                 write_txt_file(FAILED_FILE, arguments.logdir, filename, error_msg_sheet)
+        else:
+            print(filename, "is already parsed")
     print("Done")
 
 
