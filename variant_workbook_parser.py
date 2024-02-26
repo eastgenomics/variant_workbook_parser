@@ -147,7 +147,7 @@ def get_included_fields(filename: str) -> pd.DataFrame:
       data frame from included sheet
     """
     workbook = load_workbook(filename)
-    num_variants = workbook['summary']['C34'].value
+    num_variants = workbook['summary']['C34'].value #TO DO: change to 28
     interpreted_col = get_col_letter(workbook["included"], "Interpreted")
     df = pd.read_excel(filename, sheet_name="included",
                        usecols=f"A:{interpreted_col}",
