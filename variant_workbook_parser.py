@@ -422,11 +422,11 @@ def check_interpret_table(df_report: pd.DataFrame, df_included: pd.DataFrame) ->
     for row in row_index:
         try:
             assert df_report.loc[row, "Germline classification"] is not np.nan, \
-            f"empty ACMG classification in interpret_{row+1}"
+            f"empty ACMG classification in interpret table"
             assert df_report.loc[row, "HGVSc"] is not np.nan, \
-            f"empty HGVSc in interpret_{row+1}"
+            f"empty HGVSc in interpret table"
             assert df_report.loc[row, "HGVSc"] in list(df_included['HGVSc']), \
-            f"HGVSc in interpret_{row+1} does not match with that in included sheet"
+            f"HGVSc in interpret table does not match with that in included sheet"
 
         except AssertionError as msg:
             error_msg.append(str(msg))
