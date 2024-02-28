@@ -321,7 +321,7 @@ def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
         "Unusual name for instrumentID"
         assert re.match(r"^\d{5}[A-Z]\d{4}$", sample_ID), "Unusual sampleID"
         assert re.match(r"^\d{2}[A-Z]{5}\d{1,}$", batchID), "Unusual batchID"
-        assert re.match(r"^\d{4}$", testcode), "Unusual testcode in"
+        assert re.match(r"^\d{4}$", testcode), "Unusual testcode"
         assert 0 < len(probesetID) < 20, "probesetID is too long/short"
         assert probesetID.isalnum() and not probesetID.isalpha(), \
         "Unusual probesetID"
@@ -354,9 +354,9 @@ def checking_sheets(filename: str) -> str:
         for sheet in reports:
             report = workbook[sheet]
             assert report["B26"].value == "FINAL ACMG CLASSIFICATION", \
-            f"extra row(s) added or change(s) done in {report.title}"
+            f"extra row(s) or col(s) added or change(s) done in interpret sheet"
             assert report["L8"].value == "B_POINTS", \
-            f"extra col(s) added or change(s) done in {report.title}"
+            f"extra row(s) or col(s) added or change(s) done in interpret sheet"
         error_msg = None
     except AssertionError as msg:
         error_msg = str(msg)
@@ -450,20 +450,21 @@ def check_interpreted_col(df: pd.DataFrame) -> str:
       str for error message
     """
     row_yes = df[df['Interpreted'] == 'yes'].index.tolist()
-    #row_no = df[df['Interpreted'] == 'no'].index.tolist()
     error_msg = []
     for row in range(df.shape[0]):
         if row in row_yes:
             try:
                 assert df.loc[row, "Germline classification"] is not np.nan, \
-                f"Wrong interpreted column in row {row} of included sheet"
+                f"Wrong interpreted column in row {row+1} of included sheet"
             except AssertionError as msg:
                 error_msg.append(str(msg))
                 print(msg)
         else:
             try:
+                assert df.loc[row, 'Interpreted'] == "no", \
+                f"wrong entry in row {row+1} of included sheet"
                 assert df.loc[row, "Germline classification"] is np.nan, \
-                f"Wrong interpreted column in row {row} of included sheet"
+                f"Wrong interpreted column in row {row+1} of included sheet"
             except AssertionError as msg:
                 error_msg.append(str(msg))
                 print(msg)
