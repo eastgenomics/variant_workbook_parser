@@ -4,6 +4,8 @@ import argparse
 import shutil
 
 FILE_NOT_FOUND = "workbooks_not_found_clingen.txt"
+
+
 def get_command_line_args() -> argparse.Namespace:
     """
     Parse command line arguments
@@ -15,21 +17,24 @@ def get_command_line_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--input", "--i", help="input file name",
+        "--input", "--i", help=("input file that contains the list"
+                                "of verified workbook(s)"), required=True
+    )
+    parser.add_argument(
+        "--outdir", "--o", help=("dir to where the workbooks are copied"
+                                 "into"), required=True
+    )
+    parser.add_argument(
+        "--folder", "--f", help="folder to check for verified workbooks",
         required=True
     )
     parser.add_argument(
-        "--outdir", "--o", help="dir to where the workbooks are copied into", required=True
-    )
-    parser.add_argument(
-        "--folder", "--f", help="folder to check for completed workbooks", required=True
-    )
-    parser.add_argument(
-        "--logdir", "--ld", help="dir to log txt files", default="./"
+        "--logdir", "--ld", help="dir to save log txt file", default="./"
     )
     args = parser.parse_args()
 
     return args
+
 
 def write_txt_file(txt_file_name: str, output_dir: str, filename: str) -> None:
     """
@@ -49,8 +54,8 @@ def write_txt_file(txt_file_name: str, output_dir: str, filename: str) -> None:
 
 def main():
     arguments = get_command_line_args()
-    file = open(arguments.input, 'r')
-    lines = file.read().splitlines()
+    input_file = open(arguments.input, 'r')
+    lines = input_file.read().splitlines()
     for root, dirs, files in os.walk(arguments.folder):
         for line in lines:
             found = False

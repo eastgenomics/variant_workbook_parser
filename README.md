@@ -47,13 +47,13 @@ This script searches file(s) for given sample(s) in clingen folder of Trust PC a
 
 **File inputs (required)**:
 
-- `--input` / `--i`: txt file containing a list of samples for verified workbooks 
+- `--input` / `--i`: input file containing a list of verified workbooks 
 - `--outdir` / `--o`: dir where to copy the verified workbooks 
 - `--folder` / `--f`: dir where to search the verified workbooks
-- `--logdir` / `--ld` : dir where the log file(s) is saved
+- `--logdir` / `--ld` : dir where the log file is saved
 ## What outputs are expected from this app?
 - found verified workbooks are copied into outdir
-- workbooks_not_found_clingen.txt- txt file containing the samples that are not found
+- workbooks_not_found_clingen.txt- log file containing the samples that are not found
 
 ## Command line to run 
 ```python get_completed_wb.py --i <txt_file_name>  --o </path/to/folder/> --f </path/to/folder> --ld </path/to/folder>```
