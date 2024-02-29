@@ -14,9 +14,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        python3 -m pip install coverage
-
     - name: Test with unittest
       run: |
-        coverage run -m python /tests/test_variant_workbook_parser.py
-        coverage report -m
+        python -m unittest discover -s tests/ -p '*.py'
