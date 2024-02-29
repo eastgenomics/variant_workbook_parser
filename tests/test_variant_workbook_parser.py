@@ -370,6 +370,23 @@ class TestParserScript(unittest.TestCase):
                                 "included sheet Wrong interpreted column "
                                 "in row 2 of included sheet"))
 
+    def test_get_command_line_args(self):
+        """
+        Test if parser args are correctly read in
+        """
+        parser_args = get_command_line_args(['--i', '/test_data/CUH/', '--f',
+                                             'cen_snv_test2.xlsx',
+                                             '--o', '/test_data/output/',
+                                             '--ld', '/test_data/output/log/',
+                                             '--cd', '/test_data/output/completed_wb/',
+                                             '--unusual_sample_name'])
+        self.assertTrue(parser_args.indir == '/test_data/CUH/')
+        self.assertTrue(parser_args.file == ['cen_snv_test2.xlsx'])
+        self.assertTrue(parser_args.outdir == '/test_data/output/')
+        self.assertTrue(parser_args.logdir == '/test_data/output/log/')
+        self.assertTrue(parser_args.completed_dir == '/test_data/output/completed_wb/')
+        self.assertTrue(parser_args.unusual_sample_name is True)
+
 
 if __name__ == '__main__':
     unittest.main()

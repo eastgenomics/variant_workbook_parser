@@ -18,7 +18,7 @@ CLINVAR_FILE = "workbooks_parsed_clinvar_variants.txt"
 FAILED_FILE = "workbooks_fail_to_parse.txt"
 
 
-def get_command_line_args() -> argparse.Namespace:
+def get_command_line_args(arguments) -> argparse.Namespace:
     """
     Parse command line arguments
 
@@ -48,7 +48,7 @@ def get_command_line_args() -> argparse.Namespace:
         "--unusual_sample_name", action="store_true",
         help="add this argument if sample name is unusual",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(arguments)
 
     return args
 
