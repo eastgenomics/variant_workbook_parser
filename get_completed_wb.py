@@ -17,16 +17,22 @@ def get_command_line_args() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--input", "--i", help=("input file that contains the list"
-                                "of verified workbook(s)"), required=True
+        "--input",
+        "--i",
+        help=("input file that contains the list" "of verified workbook(s)"),
+        required=True,
     )
     parser.add_argument(
-        "--outdir", "--o", help=("dir to where the workbooks are copied"
-                                 "into"), required=True
+        "--outdir",
+        "--o",
+        help=("dir to where the workbooks are copied" "into"),
+        required=True,
     )
     parser.add_argument(
-        "--folder", "--f", help="folder to check for verified workbooks",
-        required=True
+        "--folder",
+        "--f",
+        help="folder to check for verified workbooks",
+        required=True,
     )
     parser.add_argument(
         "--logdir", "--ld", help="dir to save log txt file", default="./"
@@ -46,26 +52,27 @@ def write_txt_file(txt_file_name: str, output_dir: str, filename: str) -> None:
       str for output dir
       variant workbook file name
     """
-    with open(output_dir + txt_file_name, 'a') as file:
+    with open(output_dir + txt_file_name, "a") as file:
         dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        file.write(dt+" "+filename + "\n")
+        file.write(dt + " " + filename + "\n")
         file.close()
 
 
 def main():
     arguments = get_command_line_args()
-    input_file = open(arguments.input, 'r')
+    input_file = open(arguments.input, "r")
     lines = input_file.read().splitlines()
-    for root, dirs, files in os.walk(arguments.folder):
-        for line in lines:
-            found = False
-            for file in files:
-                if line in file:
-                    shutil.copy(os.path.abspath(root + '/' + file), arguments.outdir)
-                    print("found in", os.path.abspath(root))
-                    found = True
-            if not found:
-                write_txt_file(FILE_NOT_FOUND, arguments.logdir, line)
+    for line in lines:
+        found = False
+        for root, dirs, files in os.walk(arguments.folder):
+            if line in files:
+                shutil.copy(
+                    os.path.abspath(root + "/" + line), arguments.outdir
+                )
+                print("found", line, "in", os.path.abspath(root))
+                found = True
+        if not found:
+            write_txt_file(FILE_NOT_FOUND, arguments.logdir, line)
 
 
 if __name__ == "__main__":
