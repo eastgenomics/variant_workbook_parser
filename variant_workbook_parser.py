@@ -29,23 +29,32 @@ def get_command_line_args(arguments) -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--indir", "--i", help="input dir of file(s) to parse",
-        required=True
+        "--indir", "--i", help="input dir of file(s) to parse", required=True
     )
     parser.add_argument(
-        "--file", "--f", nargs='+', help="input file(s) to parse if want to specify"
+        "--file",
+        "--f",
+        nargs="+",
+        help="input file(s) to parse if want to specify",
     )
     parser.add_argument(
-        "--outdir", "--o", help="dir to save the output csv files", default="./"
+        "--outdir",
+        "--o",
+        help="dir to save the output csv files",
+        default="./",
     )
     parser.add_argument(
         "--logdir", "--ld", help="dir to save log txt files", default="./"
     )
     parser.add_argument(
-        "--completed_dir", "--cd", help="dir to move the successfully parsed workbooks", default="./"
+        "--completed_dir",
+        "--cd",
+        help="dir to move the successfully parsed workbooks",
+        default="./",
     )
     parser.add_argument(
-        "--unusual_sample_name", action="store_true",
+        "--unusual_sample_name",
+        action="store_true",
         help="add this argument if sample name is unusual",
     )
     args = parser.parse_args(arguments)
@@ -53,9 +62,9 @@ def get_command_line_args(arguments) -> argparse.Namespace:
     return args
 
 
-def get_summary_fields(filename: str, config_variable: dict,
-                       unusual_sample_name: bool) \
-                       -> tuple[pd.DataFrame, str]:
+def get_summary_fields(
+    filename: str, config_variable: dict, unusual_sample_name: bool
+) -> tuple[pd.DataFrame, str]:
     """
     Extract data from summary sheet of variant workbook
 
@@ -98,25 +107,29 @@ def get_summary_fields(filename: str, config_variable: dict,
     # checking sample naming
     error_msg = None
     if not unusual_sample_name:
-        error_msg = check_sample_name(instrumentID, sample_ID,
-                                      batchID, testcode,
-                                      probesetID)
-    d = {"Instrument ID": instrumentID,
-         "Specimen ID": sample_ID,
-         "Batch ID": batchID,
-         "Test code": testcode,
-         "Probeset ID": probesetID,
-         "Preferred condition name": new_CI,
-         "Panel": panel,
-         "Ref genome": ref_genome,
-         "Date last evaluated": date}
+        error_msg = check_sample_name(
+            instrumentID, sample_ID, batchID, testcode, probesetID
+        )
+    d = {
+        "Instrument ID": instrumentID,
+        "Specimen ID": sample_ID,
+        "Batch ID": batchID,
+        "Test code": testcode,
+        "Probeset ID": probesetID,
+        "Preferred condition name": new_CI,
+        "Panel": panel,
+        "Ref genome": ref_genome,
+        "Date last evaluated": date,
+    }
     df_summary = pd.DataFrame([d])
-    df_summary['Date last evaluated'] = pd.to_datetime(df_summary
-                                                       ['Date last evaluated'])
+    df_summary["Date last evaluated"] = pd.to_datetime(
+        df_summary["Date last evaluated"]
+    )
     df_summary["Organisation"] = config_variable["info"]["Organisation"]
     df_summary["Institution"] = config_variable["info"]["Institution"]
-    df_summary["Collection method"] = config_variable["info"] \
-                                      ["Collection method"]
+    df_summary["Collection method"] = config_variable["info"][
+        "Collection method"
+    ]
     df_summary["Allele origin"] = config_variable["info"]["Allele origin"]
     df_summary["Affected status"] = config_variable["info"]["Affected status"]
 
@@ -147,20 +160,40 @@ def get_included_fields(filename: str) -> pd.DataFrame:
       data frame from included sheet
     """
     workbook = load_workbook(filename)
-    num_variants = workbook['summary']['C34'].value #TO DO: change to 28
+    num_variants = workbook["summary"]["C34"].value  # TO DO: change to 28
     interpreted_col = get_col_letter(workbook["included"], "Interpreted")
-    df = pd.read_excel(filename, sheet_name="included",
-                       usecols=f"A:{interpreted_col}",
-                       nrows=num_variants)
-    df_included = df[["CHROM", "POS", "REF", "ALT", "SYMBOL", "HGVSc",
-                      "Consequence", "Interpreted", "Comment"]].copy()
+    df = pd.read_excel(
+        filename,
+        sheet_name="included",
+        usecols=f"A:{interpreted_col}",
+        nrows=num_variants,
+    )
+    df_included = df[
+        [
+            "CHROM",
+            "POS",
+            "REF",
+            "ALT",
+            "SYMBOL",
+            "HGVSc",
+            "Consequence",
+            "Interpreted",
+            "Comment",
+        ]
+    ].copy()
     if len(df_included["Interpreted"].value_counts()) > 0:
         df_included["Interpreted"] = df_included["Interpreted"].str.lower()
-    df_included.rename(columns={"CHROM": "Chromosome", "SYMBOL": "Gene symbol",
-                                "POS": "Start", "REF": "Reference allele",
-                                "ALT": "Alternate allele"},
-                       inplace=True)
-    df_included['Local ID'] = ""
+    df_included.rename(
+        columns={
+            "CHROM": "Chromosome",
+            "SYMBOL": "Gene symbol",
+            "POS": "Start",
+            "REF": "Reference allele",
+            "ALT": "Alternate allele",
+        },
+        inplace=True,
+    )
+    df_included["Local ID"] = ""
     for row in range(df_included.shape[0]):
         unique_id = uuid.uuid1()
         df_included.loc[row, "Local ID"] = f"uid_{unique_id.time}"
@@ -170,7 +203,9 @@ def get_included_fields(filename: str) -> pd.DataFrame:
     return df_included
 
 
-def get_report_fields(filename: str, df_included: pd.DataFrame) -> tuple[pd.DataFrame, str]:
+def get_report_fields(
+    filename: str, df_included: pd.DataFrame
+) -> tuple[pd.DataFrame, str]:
     """
     Extract data from interpret sheet(s) of variant workbook
 
@@ -248,7 +283,9 @@ def get_report_fields(filename: str, df_included: pd.DataFrame) -> tuple[pd.Data
     col_name = [i[0] for i in field_cells]
     df_report = pd.DataFrame(columns=col_name)
     report_sheets = [
-        idx for idx in workbook.sheetnames if idx.lower().startswith("interpret")
+        idx
+        for idx in workbook.sheetnames
+        if idx.lower().startswith("interpret")
     ]
 
     for idx, sheet in enumerate(report_sheets):
@@ -273,36 +310,48 @@ def get_report_fields(filename: str, df_included: pd.DataFrame) -> tuple[pd.Data
                     df_report.iloc[row, column + 1] = np.nan
 
         # getting comment on classification for clinvar submission
-        matched_strength = [("PVS", "Very Strong"),
-                            ("PS", "Strong"),
-                            ("PM", "Moderate"),
-                            ("PP", "Supporting"),
-                            ("BS", "Supporting"),
-                            ("BA", "Stand-Alone"),
-                            ("BP", "Supporting")
-                            ]
+        matched_strength = [
+            ("PVS", "Very Strong"),
+            ("PS", "Strong"),
+            ("PM", "Moderate"),
+            ("PP", "Supporting"),
+            ("BS", "Supporting"),
+            ("BA", "Stand-Alone"),
+            ("BP", "Supporting"),
+        ]
         df_report["Comment on classification"] = ""
         for row in range(df_report.shape[0]):
             evidence = []
-            for column in range(5, df_report.shape[1]-1, 2):
+            for column in range(5, df_report.shape[1] - 1, 2):
                 if not df_report.isnull().iloc[row, column]:
-                    evidence.append([df_report.columns[column],
-                                     df_report.iloc[row, column]])
+                    evidence.append(
+                        [
+                            df_report.columns[column],
+                            df_report.iloc[row, column],
+                        ]
+                    )
             for index, value in enumerate(evidence):
                 for st1, st2 in matched_strength:
                     if st1 in value[0] and st2 == value[1]:
                         evidence[index][1] = ""
             evidence_pair = []
             for e in evidence:
-                evidence_pair.append('_'.join(e).rstrip("_"))
-            comment_on_classification = ','.join(evidence_pair)
-            df_report.iloc[row, df_report.columns.get_loc('Comment on classification')] = comment_on_classification
+                evidence_pair.append("_".join(e).rstrip("_"))
+            comment_on_classification = ",".join(evidence_pair)
+            df_report.iloc[
+                row, df_report.columns.get_loc("Comment on classification")
+            ] = comment_on_classification
 
     return df_report, error_msg
 
 
-def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
-                      testcode: str, probesetID: str) -> str:
+def check_sample_name(
+    instrumentID: str,
+    sample_ID: str,
+    batchID: str,
+    testcode: str,
+    probesetID: str,
+) -> str:
     """
     checking if individual parts of sample name have
     expected naming format
@@ -317,14 +366,16 @@ def check_sample_name(instrumentID: str, sample_ID: str, batchID: str,
       str for error message
     """
     try:
-        assert re.match(r"^\d{9}$", instrumentID), \
-        "Unusual name for instrumentID"
+        assert re.match(
+            r"^\d{9}$", instrumentID
+        ), "Unusual name for instrumentID"
         assert re.match(r"^\d{5}[A-Z]\d{4}$", sample_ID), "Unusual sampleID"
         assert re.match(r"^\d{2}[A-Z]{5}\d{1,}$", batchID), "Unusual batchID"
         assert re.match(r"^\d{4}$", testcode), "Unusual testcode"
         assert 0 < len(probesetID) < 20, "probesetID is too long/short"
-        assert probesetID.isalnum() and not probesetID.isalpha(), \
-        "Unusual probesetID"
+        assert (
+            probesetID.isalnum() and not probesetID.isalpha()
+        ), "Unusual probesetID"
         error_msg = None
     except AssertionError as msg:
         error_msg = str(msg)
@@ -347,16 +398,23 @@ def checking_sheets(filename: str) -> str:
     """
     workbook = load_workbook(filename)
     summary = workbook["summary"]
-    reports = [idx for idx in workbook.sheetnames if idx.lower().startswith("interpret")]
+    reports = [
+        idx
+        for idx in workbook.sheetnames
+        if idx.lower().startswith("interpret")
+    ]
     try:
-        assert summary["I16"].value == "Date", \
-        "extra col(s) added or change(s) done in summary sheet"
+        assert (
+            summary["I16"].value == "Date"
+        ), "extra col(s) added or change(s) done in summary sheet"
         for sheet in reports:
             report = workbook[sheet]
-            assert report["B26"].value == "FINAL ACMG CLASSIFICATION", \
-            f"extra row(s) or col(s) added or change(s) done in interpret sheet"
-            assert report["L8"].value == "B_POINTS", \
-            f"extra row(s) or col(s) added or change(s) done in interpret sheet"
+            assert (
+                report["B26"].value == "FINAL ACMG CLASSIFICATION"
+            ), f"extra row(s) or col(s) added or change(s) done in interpret sheet"
+            assert (
+                report["L8"].value == "B_POINTS"
+            ), f"extra row(s) or col(s) added or change(s) done in interpret sheet"
         error_msg = None
     except AssertionError as msg:
         error_msg = str(msg)
@@ -386,7 +444,9 @@ def get_col_letter(worksheet: object, col_name: str) -> str:
     return col_letter
 
 
-def write_txt_file(txt_file_name: str, output_dir: str, filename: str, msg: str) -> None:
+def write_txt_file(
+    txt_file_name: str, output_dir: str, filename: str, msg: str
+) -> None:
     """
     write txt file output
 
@@ -397,13 +457,15 @@ def write_txt_file(txt_file_name: str, output_dir: str, filename: str, msg: str)
       variant workbook file name
       str for error message
     """
-    with open(output_dir + txt_file_name, 'a') as file:
+    with open(output_dir + txt_file_name, "a") as file:
         dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        file.write(dt+" "+filename+" "+msg+"\n")
+        file.write(dt + " " + filename + " " + msg + "\n")
         file.close()
 
 
-def check_interpret_table(df_report: pd.DataFrame, df_included: pd.DataFrame) -> str:
+def check_interpret_table(
+    df_report: pd.DataFrame, df_included: pd.DataFrame
+) -> str:
     """
     check if ACMG classification and HGVSc are correctly
     filled in in the interpret table(s)
@@ -421,12 +483,15 @@ def check_interpret_table(df_report: pd.DataFrame, df_included: pd.DataFrame) ->
     error_msg = []
     for row in row_index:
         try:
-            assert df_report.loc[row, "Germline classification"] is not np.nan, \
-            f"empty ACMG classification in interpret table"
-            assert df_report.loc[row, "HGVSc"] is not np.nan, \
-            f"empty HGVSc in interpret table"
-            assert df_report.loc[row, "HGVSc"] in list(df_included['HGVSc']), \
-            f"HGVSc in interpret table does not match with that in included sheet"
+            assert (
+                df_report.loc[row, "Germline classification"] is not np.nan
+            ), f"empty ACMG classification in interpret table"
+            assert (
+                df_report.loc[row, "HGVSc"] is not np.nan
+            ), f"empty HGVSc in interpret table"
+            assert df_report.loc[row, "HGVSc"] in list(
+                df_included["HGVSc"]
+            ), f"HGVSc in interpret table does not match with that in included sheet"
 
         except AssertionError as msg:
             error_msg.append(str(msg))
@@ -449,22 +514,25 @@ def check_interpreted_col(df: pd.DataFrame) -> str:
     ------
       str for error message
     """
-    row_yes = df[df['Interpreted'] == 'yes'].index.tolist()
+    row_yes = df[df["Interpreted"] == "yes"].index.tolist()
     error_msg = []
     for row in range(df.shape[0]):
         if row in row_yes:
             try:
-                assert df.loc[row, "Germline classification"] is not np.nan, \
-                f"Wrong interpreted column in row {row+1} of included sheet"
+                assert (
+                    df.loc[row, "Germline classification"] is not np.nan
+                ), f"Wrong interpreted column in row {row+1} of included sheet"
             except AssertionError as msg:
                 error_msg.append(str(msg))
                 print(msg)
         else:
             try:
-                assert df.loc[row, 'Interpreted'] == "no", \
-                f"wrong entry in row {row+1} of included sheet"
-                assert df.loc[row, "Germline classification"] is np.nan, \
-                f"Wrong interpreted column in row {row+1} of included sheet"
+                assert (
+                    df.loc[row, "Interpreted"] == "no"
+                ), f"wrong entry in row {row+1} of included sheet"
+                assert (
+                    df.loc[row, "Germline classification"] is np.nan
+                ), f"Wrong interpreted column in row {row+1} of included sheet"
             except AssertionError as msg:
                 error_msg.append(str(msg))
                 print(msg)
@@ -478,7 +546,7 @@ def get_folder(filename: str) -> str:
     get the folder of input file
     Parameters:
     ----------
-      str for input finame 
+      str for input finame
 
     Return:
       str for folder name
@@ -504,7 +572,7 @@ def get_parsed_list(file: str) -> list:
     lines = f.readlines()
     parsed_list = []
     for x in lines:
-        parsed_list.append(x.split(' ')[2].split('/')[-1])
+        parsed_list.append(x.split(" ")[2].split("/")[-1])
     f.close()
 
     return parsed_list
@@ -527,87 +595,233 @@ def main():
     if arguments.file:
         input_file = []
         for idx, file in enumerate(arguments.file):
-            input_file.append(glob.glob(input_dir+file)[0])
+            input_file.append(glob.glob(input_dir + file)[0])
     else:
-        input_file = glob.glob(input_dir+"*.xlsx")
+        input_file = glob.glob(input_dir + "*.xlsx")
     if len(input_file) == 0:
         print("Input file(s) not exist")
     check_and_create(arguments.outdir)
     check_and_create(arguments.completed_dir)
     check_and_create(arguments.logdir)
-    if not os.path.isfile(arguments.logdir+PARSED_FILE):
-        with open(arguments.logdir+PARSED_FILE, 'w') as file:
+    if not os.path.isfile(arguments.logdir + PARSED_FILE):
+        with open(arguments.logdir + PARSED_FILE, "w") as file:
             file.close()
     unusual_sample_name = arguments.unusual_sample_name
-    with open('parser_config.json') as f:
+    with open("parser_config.json") as f:
         config_variable = json.load(f)
-    parsed_list = get_parsed_list(arguments.logdir+PARSED_FILE)
+    parsed_list = get_parsed_list(arguments.logdir + PARSED_FILE)
     # extract fields from variant workbooks as df and merged
     for filename in input_file:
         print("Running", filename)
-        if not filename.split('/')[-1] in parsed_list:
+        if not filename.split("/")[-1] in parsed_list:
             error_msg_sheet = checking_sheets(filename)
             if not error_msg_sheet:
-                df_summary, error_msg_name = get_summary_fields(filename, config_variable,
-                                                            unusual_sample_name)
+                df_summary, error_msg_name = get_summary_fields(
+                    filename, config_variable, unusual_sample_name
+                )
                 if not error_msg_name:
                     df_included = get_included_fields(filename)
                     if df_included["Interpreted"].isna().sum() == 0:
-                        df_report, error_msg_table = get_report_fields(filename, df_included)
+                        df_report, error_msg_table = get_report_fields(
+                            filename, df_included
+                        )
                         if not error_msg_table:
                             if not df_included.empty:
-                                df_merged = pd.merge(df_included, df_summary, how="cross")
+                                df_merged = pd.merge(
+                                    df_included, df_summary, how="cross"
+                                )
                                 empty_workbook = False
                             else:
-                                df_merged = pd.concat([df_summary, df_included], axis=1)
+                                df_merged = pd.concat(
+                                    [df_summary, df_included], axis=1
+                                )
                                 empty_workbook = True
-                            df_final = pd.merge(df_merged, df_report, on="HGVSc",
-                                                 how="left")
-                            error_msg_interpreted = check_interpreted_col(df_final)
+                            df_final = pd.merge(
+                                df_merged, df_report, on="HGVSc", how="left"
+                            )
+                            error_msg_interpreted = check_interpreted_col(
+                                df_final
+                            )
                             if not error_msg_interpreted:
-                                df_final = df_final[['Local ID', 'Linking ID', 'Organisation ID', 'Gene symbol',
-                                                     'Chromosome', 'Start', 'Reference allele', 'Alternate allele',
-                                                     'Preferred condition name', 'Germline classification', 'Date last evaluated',
-                                                     'Comment on classification', 'Collection method', 'Allele origin', 'Affected status',
-                                                     'HGVSc', 'Consequence', 'Interpreted', 'Comment', 'Instrument ID', 'Specimen ID',
-                                                     'Batch ID', 'Test code', 'Probeset ID', 'Panel', 'Ref genome', 'Organisation',
-                                                     'Institution', 'Associated disease', 'Known inheritance', 'Prevalence', 'PVS1',
-                                                     'PVS1_evidence', 'PS1', 'PS1_evidence', 'PS2', 'PS2_evidence', 'PS3', 'PS3_evidence',
-                                                     'PS4', 'PS4_evidence', 'PM1', 'PM1_evidence', 'PM2', 'PM2_evidence', 'PM3',
-                                                     'PM3_evidence', 'PM4', 'PM4_evidence', 'PM5', 'PM5_evidence', 'PM6', 'PM6_evidence',
-                                                     'PP1', 'PP1_evidence', 'PP2', 'PP2_evidence', 'PP3', 'PP3_evidence', 'PP4',
-                                                     'PP4_evidence', 'BS1', 'BS1_evidence', 'BS2', 'BS2_evidence', 'BS3', 'BS3_evidence',
-                                                     'BA1', 'BA1_evidence', 'BP2', 'BP2_evidence', 'BP3', 'BP3_evidence', 'BS4',
-                                                     'BS4_evidence', 'BP1', 'BP1_evidence', 'BP4', 'BP4_evidence', 'BP5', 'BP5_evidence',
-                                                     'BP7', 'BP7_evidence']]
+                                df_final = df_final[
+                                    [
+                                        "Local ID",
+                                        "Linking ID",
+                                        "Organisation ID",
+                                        "Gene symbol",
+                                        "Chromosome",
+                                        "Start",
+                                        "Reference allele",
+                                        "Alternate allele",
+                                        "Preferred condition name",
+                                        "Germline classification",
+                                        "Date last evaluated",
+                                        "Comment on classification",
+                                        "Collection method",
+                                        "Allele origin",
+                                        "Affected status",
+                                        "HGVSc",
+                                        "Consequence",
+                                        "Interpreted",
+                                        "Comment",
+                                        "Instrument ID",
+                                        "Specimen ID",
+                                        "Batch ID",
+                                        "Test code",
+                                        "Probeset ID",
+                                        "Panel",
+                                        "Ref genome",
+                                        "Organisation",
+                                        "Institution",
+                                        "Associated disease",
+                                        "Known inheritance",
+                                        "Prevalence",
+                                        "PVS1",
+                                        "PVS1_evidence",
+                                        "PS1",
+                                        "PS1_evidence",
+                                        "PS2",
+                                        "PS2_evidence",
+                                        "PS3",
+                                        "PS3_evidence",
+                                        "PS4",
+                                        "PS4_evidence",
+                                        "PM1",
+                                        "PM1_evidence",
+                                        "PM2",
+                                        "PM2_evidence",
+                                        "PM3",
+                                        "PM3_evidence",
+                                        "PM4",
+                                        "PM4_evidence",
+                                        "PM5",
+                                        "PM5_evidence",
+                                        "PM6",
+                                        "PM6_evidence",
+                                        "PP1",
+                                        "PP1_evidence",
+                                        "PP2",
+                                        "PP2_evidence",
+                                        "PP3",
+                                        "PP3_evidence",
+                                        "PP4",
+                                        "PP4_evidence",
+                                        "BS1",
+                                        "BS1_evidence",
+                                        "BS2",
+                                        "BS2_evidence",
+                                        "BS3",
+                                        "BS3_evidence",
+                                        "BA1",
+                                        "BA1_evidence",
+                                        "BP2",
+                                        "BP2_evidence",
+                                        "BP3",
+                                        "BP3_evidence",
+                                        "BS4",
+                                        "BS4_evidence",
+                                        "BP1",
+                                        "BP1_evidence",
+                                        "BP4",
+                                        "BP4_evidence",
+                                        "BP5",
+                                        "BP5_evidence",
+                                        "BP7",
+                                        "BP7_evidence",
+                                    ]
+                                ]
                                 if empty_workbook:
-                                    df_final.fillna('zero_variant', inplace=True)
+                                    df_final.fillna(
+                                        "zero_variant", inplace=True
+                                    )
                                 else:
-                                    if (df_final.Interpreted == 'yes').sum() > 0:
-                                        df_clinvar = df_final[df_final["Interpreted"] == 'yes']
-                                        df_clinvar = df_clinvar[['Local ID', 'Linking ID',  'Organisation ID', 'Gene symbol', 'Chromosome', 'Start',
-                                                                 'Reference allele', 'Alternate allele', 'Preferred condition name',
-                                                                 'Germline classification', 'Date last evaluated', 'Comment on classification',
-                                                                 'Collection method', 'Allele origin', 'Affected status', 'Ref genome',
-                                                                 'HGVSc', 'Consequence', 'Interpreted', 'Instrument ID', 'Specimen ID']]
-                                        df_clinvar.to_csv(arguments.outdir + Path(filename).stem + "_clinvar_variants.csv", index=False)
-                                        write_txt_file(CLINVAR_FILE, arguments.logdir, filename, "")
-                                df_final.to_csv(arguments.outdir + Path(filename).stem + "_all_variants.csv", index=False)
-                                write_txt_file(PARSED_FILE, arguments.logdir, filename, "")
+                                    if (
+                                        df_final.Interpreted == "yes"
+                                    ).sum() > 0:
+                                        df_clinvar = df_final[
+                                            df_final["Interpreted"] == "yes"
+                                        ]
+                                        df_clinvar = df_clinvar[
+                                            [
+                                                "Local ID",
+                                                "Linking ID",
+                                                "Organisation ID",
+                                                "Gene symbol",
+                                                "Chromosome",
+                                                "Start",
+                                                "Reference allele",
+                                                "Alternate allele",
+                                                "Preferred condition name",
+                                                "Germline classification",
+                                                "Date last evaluated",
+                                                "Comment on classification",
+                                                "Collection method",
+                                                "Allele origin",
+                                                "Affected status",
+                                                "Ref genome",
+                                                "HGVSc",
+                                                "Consequence",
+                                                "Interpreted",
+                                                "Instrument ID",
+                                                "Specimen ID",
+                                            ]
+                                        ]
+                                        df_clinvar.to_csv(
+                                            arguments.outdir
+                                            + Path(filename).stem
+                                            + "_clinvar_variants.csv",
+                                            index=False,
+                                        )
+                                        write_txt_file(
+                                            CLINVAR_FILE,
+                                            arguments.logdir,
+                                            filename,
+                                            "",
+                                        )
+                                df_final.to_csv(
+                                    arguments.outdir
+                                    + Path(filename).stem
+                                    + "_all_variants.csv",
+                                    index=False,
+                                )
+                                write_txt_file(
+                                    PARSED_FILE, arguments.logdir, filename, ""
+                                )
                                 print("Successfully parsed", filename)
                                 shutil.move(filename, arguments.completed_dir)
 
                             else:
-                                write_txt_file(FAILED_FILE, arguments.logdir, filename, error_msg_interpreted)
+                                write_txt_file(
+                                    FAILED_FILE,
+                                    arguments.logdir,
+                                    filename,
+                                    error_msg_interpreted,
+                                )
                         else:
-                            write_txt_file(FAILED_FILE, arguments.logdir, filename, error_msg_table)
+                            write_txt_file(
+                                FAILED_FILE,
+                                arguments.logdir,
+                                filename,
+                                error_msg_table,
+                            )
                     else:
-                        print("Interpreted column in included sheet needs to be fixed")
-                        write_txt_file(FAILED_FILE, arguments.logdir, filename, "Interpreted column in included sheet needs to be fixed")
+                        print(
+                            "Interpreted column in included sheet needs to be fixed"
+                        )
+                        write_txt_file(
+                            FAILED_FILE,
+                            arguments.logdir,
+                            filename,
+                            "Interpreted column in included sheet needs to be fixed",
+                        )
                 else:
-                    write_txt_file(FAILED_FILE, arguments.logdir, filename, error_msg_name)
+                    write_txt_file(
+                        FAILED_FILE, arguments.logdir, filename, error_msg_name
+                    )
             else:
-                write_txt_file(FAILED_FILE, arguments.logdir, filename, error_msg_sheet)
+                write_txt_file(
+                    FAILED_FILE, arguments.logdir, filename, error_msg_sheet
+                )
         else:
             print(filename, "is already parsed")
     print("Done")
