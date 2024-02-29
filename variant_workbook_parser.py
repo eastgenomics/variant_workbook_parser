@@ -522,7 +522,7 @@ def check_and_create(dir: str) -> None:
 
 
 def main():
-    arguments = get_command_line_args()
+    arguments = get_command_line_args(sys.argv[1:])
     input_dir = arguments.indir
     if arguments.file:
         input_file = []
