@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import unittest
 import pandas as pd
@@ -511,6 +512,20 @@ class TestParserScript(unittest.TestCase):
             parser_args.completed_dir == "/test_data/output/completed_wb/"
         )
         self.assertTrue(parser_args.unusual_sample_name is True)
+
+    def test_write_txt_file(self):
+        """
+        Test if "write_txt_file" writes the log file as expected
+        "abc.xlsx" is expected filename in the log file
+        "testing_msg" is expected msg in the log file
+        """
+        outfile_path = "./test_log_file.txt"
+        write_txt_file("test_log_file.txt", "./",
+                       "abc.xlsx", "testing_msg")
+        contents = open(outfile_path).read()
+        os.remove(outfile_path)
+        self.assertEqual(contents.split(" ")[2], "abc.xlsx")
+        self.assertEqual(contents.split(" ")[3], "testing_msg\n")
 
 
 if __name__ == "__main__":
