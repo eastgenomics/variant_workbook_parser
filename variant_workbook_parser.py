@@ -411,10 +411,12 @@ def checking_sheets(filename: str) -> str:
             report = workbook[sheet]
             assert (
                 report["B26"].value == "FINAL ACMG CLASSIFICATION"
-            ), f"extra row(s) or col(s) added or change(s) done in interpret sheet"
+            ), f"extra row(s) or col(s) added or change(s) done in " \
+                "interpret sheet"
             assert (
                 report["L8"].value == "B_POINTS"
-            ), f"extra row(s) or col(s) added or change(s) done in interpret sheet"
+            ), f"extra row(s) or col(s) added or change(s) done in " \
+                "interpret sheet"
         error_msg = None
     except AssertionError as msg:
         error_msg = str(msg)
@@ -491,7 +493,8 @@ def check_interpret_table(
             ), f"empty HGVSc in interpret table"
             assert df_report.loc[row, "HGVSc"] in list(
                 df_included["HGVSc"]
-            ), f"HGVSc in interpret table does not match with that in included sheet"
+            ), f"HGVSc in interpret table does not match with that in "\
+                "included sheet"
 
         except AssertionError as msg:
             error_msg.append(str(msg))

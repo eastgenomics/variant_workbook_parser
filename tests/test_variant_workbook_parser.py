@@ -1,13 +1,12 @@
 import json
 import sys
 import unittest
-
-sys.path.insert(1, "../")
-
-from variant_workbook_parser import *
-from tests import TEST_DATA_DIR
 import pandas as pd
 from openpyxl import load_workbook
+
+sys.path.insert(1, "../")
+from variant_workbook_parser import *
+from tests import TEST_DATA_DIR
 
 excel_data_NUH = f"{TEST_DATA_DIR}/NUH/cen_snv_test4.xlsx"
 excel_data_CUH = f"{TEST_DATA_DIR}/CUH/cen_snv_test2.xlsx"
@@ -275,7 +274,8 @@ class TestParserScript(unittest.TestCase):
         msg = checking_sheets(excel_data_wrong_interpret_row)
         self.assertTrue(
             msg
-            == "extra row(s) or col(s) added or change(s) done in interpret sheet"
+            == "extra row(s) or col(s) added or change(s) done in "
+               "interpret sheet"
         )
 
     def test_checking_sheet_wrong_interpret_col(self):
@@ -285,7 +285,8 @@ class TestParserScript(unittest.TestCase):
         msg = checking_sheets(excel_data_wrong_interpret_col)
         self.assertTrue(
             msg
-            == "extra row(s) or col(s) added or change(s) done in interpret sheet"
+            == "extra row(s) or col(s) added or change(s) done in interpret "
+               "sheet"
         )
 
     def test_get_summary_fields(self):
