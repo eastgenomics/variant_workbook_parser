@@ -4,6 +4,7 @@ import sys
 import unittest
 import pandas as pd
 from openpyxl import load_workbook
+from mock import patch
 
 sys.path.insert(1, "../")
 from variant_workbook_parser import *
@@ -526,6 +527,17 @@ class TestParserScript(unittest.TestCase):
         os.remove(outfile_path)
         self.assertEqual(contents.split(" ")[2], "abc.xlsx")
         self.assertEqual(contents.split(" ")[3], "testing_msg\n")
+
+    @patch('os.path.exists')
+    @patch('os.makedirs')
+    def test_check_and_create(self, patch_makedirs, patch_exists):
+        """
+        Test if "check_and_create" is called if folder does not exists
+        """
+        patch_exists.return_value = False
+        check_and_create("./new_folder_created")
+        assert patch_makedirs.called is True
+
 
 
 if __name__ == "__main__":
