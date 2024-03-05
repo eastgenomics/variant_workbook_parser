@@ -92,7 +92,7 @@ def get_summary_fields(
     else:
         new_CI = CI.split("_")[1]
     panel = workbook["summary"]["F2"].value
-    date = workbook["summary"]["I17"].value
+    date = workbook["summary"]["I22"].value
     split_sampleID = sampleID.split("-")
     instrumentID = split_sampleID[0]
     sample_ID = split_sampleID[1]
@@ -160,7 +160,7 @@ def get_included_fields(filename: str) -> pd.DataFrame:
       data frame from included sheet
     """
     workbook = load_workbook(filename)
-    num_variants = workbook["summary"]["C34"].value  # TO DO: change to 33
+    num_variants = workbook["summary"]["C33"].value
     interpreted_col = get_col_letter(workbook["included"], "Interpreted")
     df = pd.read_excel(
         filename,
@@ -257,14 +257,14 @@ def get_report_fields(
         ("PP3_evidence", "C23"),
         ("PP4", "H24"),
         ("PP4_evidence", "C24"),
-        ("BS1", "K9"),  # TO DO: to swap with BA1
-        ("BS1_evidence", "C9"),
+        ("BS1", "K16"),
+        ("BS1_evidence", "C16"),
         ("BS2", "K12"),
         ("BS2_evidence", "C12"),
         ("BS3", "K13"),
         ("BS3_evidence", "C13"),
-        ("BA1", "K16"),
-        ("BA1_evidence", "C16"),
+        ("BA1", "K9"),
+        ("BA1_evidence", "C9"),
         ("BP2", "K17"),
         ("BP2_evidence", "C17"),
         ("BP3", "K18"),
@@ -405,18 +405,18 @@ def checking_sheets(filename: str) -> str:
     ]
     try:
         assert (
-            summary["I16"].value == "Date"
+            summary["I21"].value == "Date"
         ), "extra col(s) added or change(s) done in summary sheet"
         for sheet in reports:
             report = workbook[sheet]
-            assert (
-                report["B26"].value == "FINAL ACMG CLASSIFICATION"
-            ), f"extra row(s) or col(s) added or change(s) done in " \
+            assert report["B26"].value == "FINAL ACMG CLASSIFICATION", (
+                "extra row(s) or col(s) added or change(s) done in "
                 "interpret sheet"
-            assert (
-                report["L8"].value == "B_POINTS"
-            ), f"extra row(s) or col(s) added or change(s) done in " \
+            )
+            assert report["L8"].value == "B_POINTS", (
+                "extra row(s) or col(s) added or change(s) done in "
                 "interpret sheet"
+            )
         error_msg = None
     except AssertionError as msg:
         error_msg = str(msg)
@@ -487,14 +487,14 @@ def check_interpret_table(
         try:
             assert (
                 df_report.loc[row, "Germline classification"] is not np.nan
-            ), f"empty ACMG classification in interpret table"
+            ), "empty ACMG classification in interpret table"
             assert (
                 df_report.loc[row, "HGVSc"] is not np.nan
-            ), f"empty HGVSc in interpret table"
-            assert df_report.loc[row, "HGVSc"] in list(
-                df_included["HGVSc"]
-            ), f"HGVSc in interpret table does not match with that in "\
+            ), "empty HGVSc in interpret table"
+            assert df_report.loc[row, "HGVSc"] in list(df_included["HGVSc"]), (
+                "HGVSc in interpret table does not match with that in "
                 "included sheet"
+            )
 
         except AssertionError as msg:
             error_msg.append(str(msg))

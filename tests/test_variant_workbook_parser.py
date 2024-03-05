@@ -275,9 +275,8 @@ class TestParserScript(unittest.TestCase):
         """
         msg = checking_sheets(excel_data_wrong_interpret_row)
         self.assertTrue(
-            msg
-            == "extra row(s) or col(s) added or change(s) done in "
-               "interpret sheet"
+            msg == "extra row(s) or col(s) added or change(s) done in "
+            "interpret sheet"
         )
 
     def test_checking_sheet_wrong_interpret_col(self):
@@ -288,7 +287,7 @@ class TestParserScript(unittest.TestCase):
         self.assertTrue(
             msg
             == "extra row(s) or col(s) added or change(s) done in interpret "
-               "sheet"
+            "sheet"
         )
 
     def test_get_summary_fields(self):
@@ -305,7 +304,8 @@ class TestParserScript(unittest.TestCase):
         self.assertTrue(df.shape[0] == 1)
         self.assertTrue(df.shape[1] == 15)
         self.assertTrue(
-            df["Preferred condition name"][0] == "Tuberous sclerosis"
+            df["Preferred condition name"][0]
+            == "Inherited breast cancer and ovarian cancer"
         )
         self.assertTrue(df["Ref genome"][0] == "GRCh37.p13")
         self.assertTrue(
@@ -521,15 +521,14 @@ class TestParserScript(unittest.TestCase):
         "testing_msg" is expected msg in the log file
         """
         outfile_path = "./test_log_file.txt"
-        write_txt_file("test_log_file.txt", "./",
-                       "abc.xlsx", "testing_msg")
+        write_txt_file("test_log_file.txt", "./", "abc.xlsx", "testing_msg")
         contents = open(outfile_path).read()
         os.remove(outfile_path)
         self.assertEqual(contents.split(" ")[2], "abc.xlsx")
         self.assertEqual(contents.split(" ")[3], "testing_msg\n")
 
-    @patch('os.path.exists')
-    @patch('os.makedirs')
+    @patch("os.path.exists")
+    @patch("os.makedirs")
     def test_check_and_create(self, patch_makedirs, patch_exists):
         """
         Test if "check_and_create" is called if folder does not exists
@@ -537,7 +536,6 @@ class TestParserScript(unittest.TestCase):
         patch_exists.return_value = False
         check_and_create("./new_folder_created")
         assert patch_makedirs.called is True
-
 
 
 if __name__ == "__main__":
