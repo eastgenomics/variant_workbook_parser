@@ -85,12 +85,16 @@ def get_summary_fields(
     if ";" in CI:
         split_CI = CI.split(";")
         indication = []
+        Rcode = []
         for each in split_CI:
             remove_R = each.split("_")[1]
             indication.append(remove_R)
+            Rcode.append(each.split("_")[0])
         new_CI = ";".join(indication)
+        combined_Rcode = ";".join(Rcode)
     else:
         new_CI = CI.split("_")[1]
+        combined_Rcode = CI.split("_")[0]
     panel = workbook["summary"]["F2"].value
     date = workbook["summary"]["I22"].value
     split_sampleID = sampleID.split("-")
@@ -116,6 +120,7 @@ def get_summary_fields(
         "Batch ID": batchID,
         "Test code": testcode,
         "Probeset ID": probesetID,
+        "R code": combined_Rcode,
         "Preferred condition name": new_CI,
         "Panel": panel,
         "Ref genome": ref_genome,
@@ -675,6 +680,7 @@ def main():
                 "Start",
                 "Reference allele",
                 "Alternate allele",
+                "R code",
                 "Preferred condition name",
                 "Germline classification",
                 "Date last evaluated",

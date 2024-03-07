@@ -302,10 +302,11 @@ class TestParserScript(unittest.TestCase):
         """
         df, msg = get_summary_fields(excel_data_NUH, config_variable, False)
         self.assertTrue(df.shape[0] == 1)
-        self.assertTrue(df.shape[1] == 15)
+        self.assertTrue(df.shape[1] == 16)
         self.assertTrue(
             df["Preferred condition name"][0]
-            == "Inherited breast cancer and ovarian cancer"
+            == ("Inherited breast cancer and ovarian cancer;Inherited "
+                "breast cancer and ovarian cancer")
         )
         self.assertTrue(df["Ref genome"][0] == "GRCh37.p13")
         self.assertTrue(
