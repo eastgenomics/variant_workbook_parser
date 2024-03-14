@@ -305,8 +305,10 @@ class TestParserScript(unittest.TestCase):
         self.assertTrue(df.shape[1] == 16)
         self.assertTrue(
             df["Preferred condition name"][0]
-            == ("Inherited breast cancer and ovarian cancer;Inherited "
-                "breast cancer and ovarian cancer")
+            == (
+                "Inherited breast cancer and ovarian cancer;Inherited "
+                "breast cancer and ovarian cancer"
+            )
         )
         self.assertTrue(df["Ref genome"][0] == "GRCh37.p13")
         self.assertTrue(
@@ -499,8 +501,12 @@ class TestParserScript(unittest.TestCase):
                 "cen_snv_test2.xlsx",
                 "--o",
                 "/test_data/output/",
-                "--ld",
-                "/test_data/output/log/",
+                "--pf",
+                "/test_data/output/log/workbooks_parsed_all_variants.txt",
+                "--cf",
+                "/test_data/output/log/workbooks_parsed_clinvar_variants.txt",
+                "--ff",
+                "/test_data/output/log/workbooks_fail_to_parse.txt",
                 "--cd",
                 "/test_data/output/completed_wb/",
                 "--unusual_sample_name",
@@ -509,7 +515,18 @@ class TestParserScript(unittest.TestCase):
         self.assertTrue(parser_args.indir == "/test_data/CUH/")
         self.assertTrue(parser_args.file == ["cen_snv_test2.xlsx"])
         self.assertTrue(parser_args.outdir == "/test_data/output/")
-        self.assertTrue(parser_args.logdir == "/test_data/output/log/")
+        self.assertTrue(
+            parser_args.parsed_file
+            == "/test_data/output/log/workbooks_parsed_all_variants.txt"
+        )
+        self.assertTrue(
+            parser_args.clinvar_file
+            == "/test_data/output/log/workbooks_parsed_clinvar_variants.txt"
+        )
+        self.assertTrue(
+            parser_args.failed_file
+            == "/test_data/output/log/workbooks_fail_to_parse.txt"
+        )
         self.assertTrue(
             parser_args.completed_dir == "/test_data/output/completed_wb/"
         )
@@ -522,7 +539,7 @@ class TestParserScript(unittest.TestCase):
         "testing_msg" is expected msg in the log file
         """
         outfile_path = "./test_log_file.txt"
-        write_txt_file("test_log_file.txt", "./", "abc.xlsx", "testing_msg")
+        write_txt_file("test_log_file.txt", "abc.xlsx", "testing_msg")
         contents = open(outfile_path).read()
         os.remove(outfile_path)
         self.assertEqual(contents.split(" ")[2], "abc.xlsx")
@@ -530,12 +547,12 @@ class TestParserScript(unittest.TestCase):
 
     @patch("os.path.exists")
     @patch("os.makedirs")
-    def test_check_and_create(self, patch_makedirs, patch_exists):
+    def test_check_and_create_folder(self, patch_makedirs, patch_exists):
         """
         Test if "check_and_create" is called if folder does not exists
         """
         patch_exists.return_value = False
-        check_and_create("./new_folder_created")
+        check_and_create_folder("./new_folder_created")
         assert patch_makedirs.called is True
 
 

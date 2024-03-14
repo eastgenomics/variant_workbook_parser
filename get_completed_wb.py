@@ -3,8 +3,6 @@ from datetime import datetime
 import argparse
 import shutil
 
-FILE_NOT_FOUND = "workbooks_not_found_clingen.txt"
-
 
 def get_command_line_args() -> argparse.Namespace:
     """
@@ -19,13 +17,13 @@ def get_command_line_args() -> argparse.Namespace:
     parser.add_argument(
         "--input",
         "--i",
-        help=("input file that contains the list" "of verified workbook(s)"),
+        help="input file that contains the list of verified workbook(s)",
         required=True,
     )
     parser.add_argument(
         "--outdir",
         "--o",
-        help=("dir to where the workbooks are copied" "into"),
+        help="dir to where the workbooks are copied into",
         required=True,
     )
     parser.add_argument(
@@ -35,24 +33,26 @@ def get_command_line_args() -> argparse.Namespace:
         required=True,
     )
     parser.add_argument(
-        "--logdir", "--ld", help="dir to save log txt file", default="./"
+        "--file_not_found",
+        "--fnf",
+        help="log file to record files not found",
+        default="./workbooks_not_found_clingen.txt",
     )
     args = parser.parse_args()
 
     return args
 
 
-def write_txt_file(txt_file_name: str, output_dir: str, filename: str) -> None:
+def write_txt_file(txt_file_name: str, filename: str) -> None:
     """
     write txt file output
 
     Parameters
     ----------
       str for output txt file name
-      str for output dir
       variant workbook file name
     """
-    with open(output_dir + txt_file_name, "a") as file:
+    with open(txt_file_name, "a") as file:
         dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         file.write(dt + " " + filename + "\n")
         file.close()
@@ -72,7 +72,7 @@ def main():
                 print("found", line, "in", os.path.abspath(root))
                 found = True
         if not found:
-            write_txt_file(FILE_NOT_FOUND, arguments.logdir, line)
+            write_txt_file(arguments.file_not_found, line)
 
 
 if __name__ == "__main__":

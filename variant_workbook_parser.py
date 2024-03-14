@@ -12,10 +12,7 @@ import json
 import numpy as np
 from openpyxl import load_workbook
 import pandas as pd
-
-PARSED_FILE = "workbooks_parsed_all_variants.txt"
-CLINVAR_FILE = "workbooks_parsed_clinvar_variants.txt"
-FAILED_FILE = "workbooks_fail_to_parse.txt"
+import dxpy
 
 
 def get_command_line_args(arguments) -> argparse.Namespace:
@@ -44,7 +41,22 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         default="./",
     )
     parser.add_argument(
-        "--logdir", "--ld", help="dir to save log txt files", default="./"
+        "--parsed_file",
+        "--pf",
+        help="log file to record all parsed workbook",
+        default="./workbooks_parsed_all_variants.txt",
+    )
+    parser.add_argument(
+        "--clinvar_file",
+        "--cf",
+        help="log file to record all parsed workbook submitted to clinvar",
+        default="./workbooks_parsed_clinvar_variants.txt",
+    )
+    parser.add_argument(
+        "--failed_file",
+        "--ff",
+        help="log file to record failed workbook",
+        default="./workbooks_fail_to_parse.txt",
     )
     parser.add_argument(
         "--completed_dir",
@@ -451,20 +463,17 @@ def get_col_letter(worksheet: object, col_name: str) -> str:
     return col_letter
 
 
-def write_txt_file(
-    txt_file_name: str, output_dir: str, filename: str, msg: str
-) -> None:
+def write_txt_file(txt_file_name: str, filename: str, msg: str) -> None:
     """
     write txt file output
 
     Parameters
     ----------
       str for output txt file name
-      str for output dir
       variant workbook file name
       str for error message
     """
-    with open(output_dir + txt_file_name, "a") as file:
+    with open(txt_file_name, "a") as file:
         dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         file.write(dt + " " + filename + " " + msg + "\n")
         file.close()
@@ -583,7 +592,7 @@ def get_parsed_list(file: str) -> list:
     return parsed_list
 
 
-def check_and_create(dir: str) -> None:
+def check_and_create_folder(dir: str) -> None:
     """
     check if a dir exists and create
     Parameters
@@ -605,16 +614,15 @@ def main():
         input_file = glob.glob(input_dir + "*.xlsx")
     if len(input_file) == 0:
         print("Input file(s) not exist")
-    check_and_create(arguments.outdir)
-    check_and_create(arguments.completed_dir)
-    check_and_create(arguments.logdir)
-    if not os.path.isfile(arguments.logdir + PARSED_FILE):
-        with open(arguments.logdir + PARSED_FILE, "w") as file:
+    check_and_create_folder(arguments.outdir)
+    check_and_create_folder(arguments.completed_dir)
+    if not os.path.isfile(arguments.parsed_file):
+        with open(arguments.parsed_file, "w") as file:
             file.close()
     unusual_sample_name = arguments.unusual_sample_name
     with open("parser_config.json") as f:
         config_variable = json.load(f)
-    parsed_list = get_parsed_list(arguments.logdir + PARSED_FILE)
+    parsed_list = get_parsed_list(arguments.parsed_file)
     # extract fields from variant workbooks as df and merged
     for filename in input_file:
         print("Running", filename)
@@ -623,24 +631,19 @@ def main():
             continue
         error_msg_sheet = checking_sheets(filename)
         if error_msg_sheet:
-            write_txt_file(
-                FAILED_FILE, arguments.logdir, filename, error_msg_sheet
-            )
+            write_txt_file(arguments.failed_file, filename, error_msg_sheet)
             continue
         df_summary, error_msg_name = get_summary_fields(
             filename, config_variable, unusual_sample_name
         )
         if error_msg_name:
-            write_txt_file(
-                FAILED_FILE, arguments.logdir, filename, error_msg_name
-            )
+            write_txt_file(arguments.failed_file, filename, error_msg_name)
             continue
         df_included = get_included_fields(filename)
         if df_included["Interpreted"].isna().sum() != 0:
             print("Interpreted column in included sheet needs to be fixed")
             write_txt_file(
-                FAILED_FILE,
-                arguments.logdir,
+                arguments.failed_file,
                 filename,
                 "Interpreted column in included sheet needs to be fixed",
             )
@@ -648,8 +651,7 @@ def main():
         df_report, error_msg_table = get_report_fields(filename, df_included)
         if error_msg_table:
             write_txt_file(
-                FAILED_FILE,
-                arguments.logdir,
+                arguments.failed_file,
                 filename,
                 error_msg_table,
             )
@@ -664,8 +666,7 @@ def main():
         error_msg_interpreted = check_interpreted_col(df_final)
         if error_msg_interpreted:
             write_txt_file(
-                FAILED_FILE,
-                arguments.logdir,
+                arguments.failed_file,
                 filename,
                 error_msg_interpreted,
             )
@@ -797,8 +798,7 @@ def main():
                     index=False,
                 )
                 write_txt_file(
-                    CLINVAR_FILE,
-                    arguments.logdir,
+                    arguments.clinvar_file,
                     filename,
                     "",
                 )
@@ -806,10 +806,43 @@ def main():
             arguments.outdir + Path(filename).stem + "_all_variants.csv",
             index=False,
         )
-        write_txt_file(PARSED_FILE, arguments.logdir, filename, "")
+        write_txt_file(arguments.parsed_file, filename, "")
         print("Successfully parsed", filename)
         shutil.move(filename, arguments.completed_dir)
 
+    # uploading log files to dnanexus project for backup
+    pf_base_name = Path(arguments.parsed_file).stem
+    cf_base_name = Path(arguments.clinvar_file).stem
+    now = datetime.now()
+    print("uploading log files to DNAnexus")
+    dxpy.upload_local_file(
+        arguments.parsed_file,
+        project=config_variable["info"]["projectID"],
+        name=pf_base_name
+        + "_"
+        + now.strftime("%Y")
+        + "_"
+        + now.strftime("%m")
+        + "_"
+        + now.strftime("%d")
+        + "_"
+        + now.strftime("%H%M%S")
+        + ".txt",
+    )
+    dxpy.upload_local_file(
+        arguments.clinvar_file,
+        project=config_variable["info"]["projectID"],
+        name=cf_base_name
+        + "_"
+        + now.strftime("%Y")
+        + "_"
+        + now.strftime("%m")
+        + "_"
+        + now.strftime("%d")
+        + "_"
+        + now.strftime("%H%M%S")
+        + ".txt",
+    )
     print("Done")
 
 
