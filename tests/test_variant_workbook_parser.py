@@ -49,10 +49,10 @@ class TestParserScript(unittest.TestCase):
         self.assertTrue(
             parsed_list
             == [
+                "cen_snv_test1.xlsx",
                 "cen_snv_test2.xlsx",
-                "cen_snv_test4.xlsx",
                 "cen_snv_test3.xlsx",
-                "cen_snv_test5.xlsx",
+                "cen_snv_test4.xlsx",
             ]
         )
 
@@ -545,8 +545,8 @@ class TestParserScript(unittest.TestCase):
         write_txt_file("test_log_file.txt", "abc.xlsx", "testing_msg")
         contents = open(outfile_path).read()
         os.remove(outfile_path)
-        self.assertEqual(contents.split(" ")[2], "abc.xlsx")
-        self.assertEqual(contents.split(" ")[3], "testing_msg\n")
+        self.assertEqual(contents.split("\t ")[1], "abc.xlsx")
+        self.assertEqual(contents.split("\t ")[2], "testing_msg\n")
 
     @patch("os.path.exists")
     @patch("os.makedirs")

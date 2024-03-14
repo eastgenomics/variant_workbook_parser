@@ -1,4 +1,4 @@
-26/02/2024 11:50:43 /home/winmintun/Desktop/cloned_github/variant_workbook_working_folder_changevcf/test_cases_verified_120224/NUH/cen_snv_test2.xlsx 
-26/02/2024 11:50:44 /home/winmintun/Desktop/cloned_github/variant_workbook_working_folder_changevcf/test_cases_verified_120224/NUH/cen_snv_test4.xlsx 
-26/02/2024 11:50:45 /home/winmintun/Desktop/cloned_github/variant_workbook_working_folder_changevcf/test_cases_verified_120224/NUH/cen_snv_test3.xlsx 
-26/02/2024 11:50:46 /home/winmintun/Desktop/cloned_github/variant_workbook_working_folder_changevcf/test_cases_verified_120224/NUH/cen_snv_test5.xlsx 
+14/03/2024 15:20:10	 CUH/cen_snv_test1.xlsx
+14/03/2024 15:20:10	 NUH/cen_snv_test2.xlsx	
+14/03/2024 15:20:10	 CUH/cen_snv_test3.xlsx	
+14/03/2024 15:20:10	 NUH/cen_snv_test4.xlsx		 

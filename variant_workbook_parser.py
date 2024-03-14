@@ -478,7 +478,7 @@ def write_txt_file(txt_file_name: str, filename: str, msg: str) -> None:
     """
     with open(txt_file_name, "a") as file:
         dt = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        file.write(dt + " " + filename + " " + msg + "\n")
+        file.write(dt + "\t " + filename + "\t " + msg + "\n")
         file.close()
 
 
@@ -589,7 +589,9 @@ def get_parsed_list(file: str) -> list:
     lines = f.readlines()
     parsed_list = []
     for x in lines:
-        parsed_list.append(x.split(" ")[2].split("/")[-1])
+        columns = x.split("\t ")
+        file_path = Path(columns[1])
+        parsed_list.append(Path(file_path).stem+'.xlsx')
     f.close()
 
     return parsed_list
