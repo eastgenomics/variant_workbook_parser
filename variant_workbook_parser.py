@@ -654,7 +654,7 @@ def main():
     # extract fields from variant workbooks as df and merged
     for filename in input_file:
         print("Running", filename)
-        if filename.split("/")[-1] in parsed_list:
+        if (Path(filename).stem+".xlsx") in parsed_list:
             print(filename, "is already parsed")
             continue
         error_msg_sheet = checking_sheets(filename)
