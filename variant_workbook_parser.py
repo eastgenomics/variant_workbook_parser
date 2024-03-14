@@ -69,6 +69,9 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         action="store_true",
         help="add this argument if sample name is unusual",
     )
+    parser.add_argument(
+        "--token", "--tk", help="DNAnexus token to log in", required=True
+    )
     args = parser.parse_args(arguments)
 
     return args
@@ -603,6 +606,29 @@ def check_and_create_folder(dir: str) -> None:
         os.makedirs(dir)
 
 
+def dx_login(token: str) -> bool:
+    """
+    Function to check dxpy login
+    Input: dxpy token
+    Output: boolean
+    """
+
+    try:
+        DX_SECURITY_CONTEXT = {
+            "auth_token_type": "Bearer",
+            "auth_token": str(token),
+        }
+
+        dxpy.set_security_context(DX_SECURITY_CONTEXT)
+        dxpy.api.system_whoami()
+        return True
+
+    except dxpy.exceptions.InvalidAuthentication as e:
+        print(e)
+
+        return False
+
+
 def main():
     arguments = get_command_line_args(sys.argv[1:])
     input_dir = arguments.indir
@@ -815,6 +841,7 @@ def main():
     cf_base_name = Path(arguments.clinvar_file).stem
     now = datetime.now()
     print("uploading log files to DNAnexus")
+    dx_login(arguments.token)
     dxpy.upload_local_file(
         arguments.parsed_file,
         project=config_variable["info"]["projectID"],

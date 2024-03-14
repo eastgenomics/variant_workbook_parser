@@ -510,6 +510,8 @@ class TestParserScript(unittest.TestCase):
                 "--cd",
                 "/test_data/output/completed_wb/",
                 "--unusual_sample_name",
+                "--tk",
+                "abcdefgh",
             ]
         )
         self.assertTrue(parser_args.indir == "/test_data/CUH/")
@@ -531,6 +533,7 @@ class TestParserScript(unittest.TestCase):
             parser_args.completed_dir == "/test_data/output/completed_wb/"
         )
         self.assertTrue(parser_args.unusual_sample_name is True)
+        self.assertTrue(parser_args.token == "abcdefgh")
 
     def test_write_txt_file(self):
         """

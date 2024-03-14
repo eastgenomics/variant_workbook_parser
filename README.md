@@ -28,6 +28,7 @@ This should be the same for every run
 - `--failed_file` / `--ff` : log file to record the workbook that are failed to parse.
 - `--completed_dir` / `--cd` : dir to where the successfully parsed workbook(s) are moved. 
 - `--unusual_sample_name`: boolean - default is False and the sample name in the workbook will be tested if it follows the standard naming format, and if the test fails, the workbook for that sample will not be parsed. Put this args to skip the test in samples with unusual naming format.
+- `--token` / `--tk` : dnanexus token to login
 
 ## What outputs are expected from this app?
 - csv file containing all variants from the workbook
