@@ -820,7 +820,9 @@ def main():
             df_merged = pd.concat([df_summary, df_included], axis=1)
             empty_workbook = True
         df_final = pd.merge(df_merged, df_report, on="HGVSc", how="left")
-        error_msg_interpreted = check_interpreted_col(df_final)
+        error_msg_interpreted = None
+        if not empty_workbook:
+            error_msg_interpreted = check_interpreted_col(df_final)
         if error_msg_interpreted:
             write_txt_file(
                 arguments.failed_file,

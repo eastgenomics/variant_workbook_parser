@@ -32,14 +32,18 @@ This script may be executed as a standalone to parse the variant workbook(s).
 
 ## What outputs are expected from this app?
 - csv file containing all variants from the workbook
-- csv file containing interpreted variant from the workbook
+- csv file containing interpreted variant(s) from the workbook for clinvar submission (optional)
 - workbooks_fail_to_parse.txt (optional) - txt file containing the file(s) that fails to be parsed by parser script and reason for fail
-- workbooks_parsed_all_variants.txt (optional) - txt file containing the file(s) that are successfully parsed 
+- workbooks_parsed_all_variants.txt - txt file containing the file(s) that are successfully parsed 
 - workbooks_parsed_clinvar_variants.txt (optional) - txt file containing the file(s) that are successfully parsed for clinvar submission
 
 
 ## Command line to run 
-```python variant_workbook_parser.py --i </path/to/folder/> --f <sample_name> --o </path/to/folder/> --ld </path/to/folder/> --cd  </path/to/folder/> --unusual_sample_name```
+`python variant_workbook_parser.py --i </path/to/folder/> --f <file_name> --o </path/to/folder/> --pf </path/to/file/> --cf </path/to/file/> --fp </path/to/file/> --cd </path/to/folder/> --tk <DNAnexus token> --unusual_sample_name`
+
+Recommend to run as below so the all the output dir and files are directed to default
+
+`python variant_workbook_parser.py --i </path/to/folder/> --f <file_name> --tk <DNAnexus token>`
 
 # get_completed_wb.py
 
@@ -60,4 +64,4 @@ This script searches file(s) for given sample(s) in clingen folder of Trust PC a
 - workbooks_not_found_clingen.txt- log file containing the samples that are not found
 
 ## Command line to run 
-```python get_completed_wb.py --i <txt_file_name>  --o </path/to/folder/> --f </path/to/folder> --ld </path/to/folder>```
+```python get_completed_wb.py --i <txt_file_name>  --o </path/to/folder/> --f </path/to/folder> --fnf </path/to/log file>```
