@@ -28,6 +28,13 @@ excel_data_wrong_interpret_col = (
 excel_data_wrong_interpreted = (
     f"{TEST_DATA_DIR}/CUH/cen_snv_test2_wrong_interpreted.xlsx"
 )
+excel_data_wrong_ACMG = f"{TEST_DATA_DIR}/CUH/cen_snv_test2_wrong_ACMG.xlsx"
+excel_data_wrong_dropdown = (
+    f"{TEST_DATA_DIR}/NUH/cen_snv_test4_wrong_interpret_dropdown.xlsx"
+)
+excel_data_wrong_strength = (
+    f"{TEST_DATA_DIR}/NUH/cen_snv_test4_wrong_interpret_strength.xlsx"
+)
 
 with open(f"{TEST_DATA_DIR}/test_parser_config.json") as f:
     config_variable = json.load(f)
@@ -260,6 +267,30 @@ class TestParserScript(unittest.TestCase):
             error_msg == ("empty ACMG classification in interpret table")
         )
 
+    def test_check_interpret_table_wrong_ACMG(self):
+        """
+        Test if wrong entry of ACMG classification in df_report
+        is captured as error
+        """
+        df_included = get_included_fields(excel_data_wrong_ACMG)
+        df_report, msg = get_report_fields(excel_data_wrong_ACMG, df_included)
+        error_msg = check_interpret_table(df_report, df_included)
+        self.assertTrue(
+            error_msg == ("wrong ACMG classification in interpret table")
+        )
+
+    def test_check_interpret_table_wrong_strength(self):
+        """
+        Test if wrong entry of strength in df_report
+        is captured as error
+        """
+        df_included = get_included_fields(excel_data_wrong_strength)
+        df_report, msg = get_report_fields(
+            excel_data_wrong_strength, df_included
+        )
+        error_msg = check_interpret_table(df_report, df_included)
+        self.assertTrue(error_msg == ("Wrong strength in PM2"))
+
     def test_checking_sheet_wrong_summary(self):
         """
         Test if change done in columns of summary sheet is captured as error
@@ -487,6 +518,27 @@ class TestParserScript(unittest.TestCase):
                 "included sheet Wrong interpreted column "
                 "in row 2 of included sheet"
             )
+        )
+
+    def test_interpreted_dropdown(self):
+        """
+        Test if interpreted col (yes/no) is correctly filled in
+        Expected to throw error here
+        """
+        unusual_sample_name = False
+        df_summary, error_msg_name = get_summary_fields(
+            excel_data_wrong_dropdown, config_variable, unusual_sample_name
+        )
+        df_included = get_included_fields(excel_data_wrong_dropdown)
+        df_report, error_msg_table = get_report_fields(
+            excel_data_wrong_dropdown, df_included
+        )
+        df_merged = pd.merge(df_included, df_summary, how="cross")
+        df_final = pd.merge(df_merged, df_report, on="HGVSc", how="left")
+        msg = check_interpreted_col(df_final)
+        self.assertTrue(
+            msg
+            == ("Wrong interpreted column dropdown in row 1 of included sheet")
         )
 
     def test_get_command_line_args(self):

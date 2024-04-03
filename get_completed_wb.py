@@ -36,7 +36,7 @@ def get_command_line_args() -> argparse.Namespace:
         "--file_not_found",
         "--fnf",
         help="log file to record files not found",
-        default="./workbooks_not_found_clingen.txt",
+        default="//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/log/workbooks_not_found_clingen.txt",
     )
     args = parser.parse_args()
 

@@ -38,31 +38,31 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         "--outdir",
         "--o",
         help="dir to save the output csv files",
-        default="./",
+        default="//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/",
     )
     parser.add_argument(
         "--parsed_file",
         "--pf",
         help="log file to record all parsed workbook",
-        default="./workbooks_parsed_all_variants.txt",
+        default="//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/log/workbooks_parsed_all_variants.txt",
     )
     parser.add_argument(
         "--clinvar_file",
         "--cf",
         help="log file to record all parsed workbook submitted to clinvar",
-        default="./workbooks_parsed_clinvar_variants.txt",
+        default="//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/log/workbooks_parsed_clinvar_variants.txt",
     )
     parser.add_argument(
         "--failed_file",
         "--ff",
         help="log file to record failed workbook",
-        default="./workbooks_fail_to_parse.txt",
+        default="//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/log/workbooks_fail_to_parse.txt",
     )
     parser.add_argument(
         "--completed_dir",
         "--cd",
         help="dir to move the successfully parsed workbooks",
-        default="./",
+        default="//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/completed_wb/",
     )
     parser.add_argument(
         "--unusual_sample_name",
@@ -111,7 +111,7 @@ def get_summary_fields(
         new_CI = CI.split("_")[1]
         combined_Rcode = CI.split("_")[0]
     panel = workbook["summary"]["F2"].value
-    date = workbook["summary"]["I22"].value
+    date = workbook["summary"]["I22"].value  # TODO:change G22
     split_sampleID = sampleID.split("-")
     instrumentID = split_sampleID[0]
     sample_ID = split_sampleID[1]
@@ -180,7 +180,7 @@ def get_included_fields(filename: str) -> pd.DataFrame:
       data frame from included sheet
     """
     workbook = load_workbook(filename)
-    num_variants = workbook["summary"]["C33"].value
+    num_variants = workbook["summary"]["C33"].value  # TODO: change to C38
     interpreted_col = get_col_letter(workbook["included"], "Interpreted")
     df = pd.read_excel(
         filename,
@@ -425,7 +425,7 @@ def checking_sheets(filename: str) -> str:
     ]
     try:
         assert (
-            summary["I21"].value == "Date"
+            summary["I21"].value == "Date"  # TODO: change to G21
         ), "extra col(s) added or change(s) done in summary sheet"
         for sheet in reports:
             report = workbook[sheet]
@@ -498,13 +498,34 @@ def check_interpret_table(
     ------
       str for error message
     """
-    row_index = df_report[df_report.isnull()].index.tolist()
     error_msg = []
-    for row in row_index:
+    strength_dropdown = [
+        "Very Strong",
+        "Strong",
+        "Moderate",
+        "Supporting",
+        "NA",
+    ]
+    BA1_dropdown = [
+        "Stand-Alone",
+        "Very Strong",
+        "Strong",
+        "Moderate",
+        "Supporting",
+        "NA",
+    ]
+    for row in range(df_report.shape[0]):
         try:
             assert (
                 df_report.loc[row, "Germline classification"] is not np.nan
             ), "empty ACMG classification in interpret table"
+            assert df_report.loc[row, "Germline classification"] in [
+                "Pathogenic",
+                "Likely Pathogenic",
+                "Uncertain Significance",
+                "Likely Benign",
+                "Benign",
+            ], "wrong ACMG classification in interpret table"
             assert (
                 df_report.loc[row, "HGVSc"] is not np.nan
             ), "empty HGVSc in interpret table"
@@ -512,6 +533,110 @@ def check_interpret_table(
                 "HGVSc in interpret table does not match with that in "
                 "included sheet"
             )
+            if df_report.loc[row, "PVS1"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PVS1"] in strength_dropdown
+                ), "Wrong strength in PVS1"
+            if df_report.loc[row, "PS1"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PS1"] in strength_dropdown
+                ), "Wrong strength in PS1"
+            if df_report.loc[row, "PS2"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PS2"] in strength_dropdown
+                ), "Wrong strength in PS2"
+            if df_report.loc[row, "PS3"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PS3"] in strength_dropdown
+                ), "Wrong strength in PS3"
+            if df_report.loc[row, "PS4"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PS4"] in strength_dropdown
+                ), "Wrong strength in PS4"
+            if df_report.loc[row, "PM1"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PM1"] in strength_dropdown
+                ), "Wrong strength in PM1"
+            if df_report.loc[row, "PM2"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PM2"] in strength_dropdown
+                ), "Wrong strength in PM2"
+            if df_report.loc[row, "PM3"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PM3"] in strength_dropdown
+                ), "Wrong strength in PM3"
+            if df_report.loc[row, "PM4"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PM4"] in strength_dropdown
+                ), "Wrong strength in PM4"
+            if df_report.loc[row, "PM5"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PM5"] in strength_dropdown
+                ), "Wrong strength in PM5"
+            if df_report.loc[row, "PM6"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PM6"] in strength_dropdown
+                ), "Wrong strength in PM6"
+            if df_report.loc[row, "PP1"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PP1"] in strength_dropdown
+                ), "Wrong strength in PP1"
+            if df_report.loc[row, "PP2"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PP2"] in strength_dropdown
+                ), "Wrong strength in PP2"
+            if df_report.loc[row, "PP3"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PP3"] in strength_dropdown
+                ), "Wrong strength in PP3"
+            if df_report.loc[row, "PP4"] is not np.nan:
+                assert (
+                    df_report.loc[row, "PP4"] in strength_dropdown
+                ), "Wrong strength in PP4"
+            if df_report.loc[row, "BS1"] is not np.nan:
+                assert (
+                    df_report.loc[row, "BS1"] in strength_dropdown
+                ), "Wrong strength in BS1"
+            if df_report.loc[row, "BS2"] is not np.nan:
+                assert (
+                    df_report.loc[row, "BS2"] in strength_dropdown
+                ), "Wrong strength in BS2"
+            if df_report.loc[row, "BS3"] is not np.nan:
+                assert (
+                    df_report.loc[row, "BS3"] in strength_dropdown
+                ), "Wrong strength in BS3"
+            if df_report.loc[row, "BA1"] is not np.nan:
+                assert (
+                    df_report.loc[row, "BA1"] in BA1_dropdown
+                ), "Wrong strength in BA1"
+            if df_report.loc[row, "BP2"] is not np.nan:
+                assert (
+                    df_report.loc[row, "BP2"] in strength_dropdown
+                ), "Wrong strength in BP2"
+            if df_report.loc[row, "BP3"] is not np.nan:
+                assert (
+                    df_report.loc[row, "BP3"] in strength_dropdown
+                ), "Wrong strength in BP3"
+            if df_report.loc[row, "BS4"] is not np.nan:
+                assert (
+                    df_report.loc[row, "BS4"] in strength_dropdown
+                ), "Wrong strength in BS4"
+            if df_report.loc[row, "BP1"] is not np.nan:
+                assert (
+                    df_report.loc[row, "BP1"] in strength_dropdown
+                ), "Wrong strength in BP1"
+            if df_report.loc[row, "BP4"] is not np.nan:
+                assert (
+                    df_report.loc[row, "BP4"] in strength_dropdown
+                ), "Wrong strength in BP4"
+            if df_report.loc[row, "BP5"] is not np.nan:
+                assert (
+                    df_report.loc[row, "BP5"] in strength_dropdown
+                ), "Wrong strength in BP5"
+            if df_report.loc[row, "BP7"] is not np.nan:
+                assert (
+                    df_report.loc[row, "BP7"] in strength_dropdown
+                ), "Wrong strength in BP7"
 
         except AssertionError as msg:
             error_msg.append(str(msg))
@@ -547,6 +672,10 @@ def check_interpreted_col(df: pd.DataFrame) -> str:
                 print(msg)
         else:
             try:
+                assert (
+                    df.loc[row, "Interpreted"] == "no"
+                ), (f"Wrong interpreted column dropdown in row {row+1} "
+                    "of included sheet")
                 assert (
                     df.loc[row, "Germline classification"] is np.nan
                 ), f"Wrong interpreted column in row {row+1} of included sheet"
@@ -591,7 +720,7 @@ def get_parsed_list(file: str) -> list:
     for x in lines:
         columns = x.split("\t ")
         file_path = Path(columns[1])
-        parsed_list.append(Path(file_path).stem+'.xlsx')
+        parsed_list.append(Path(file_path).stem + ".xlsx")
     f.close()
 
     return parsed_list
@@ -654,7 +783,7 @@ def main():
     # extract fields from variant workbooks as df and merged
     for filename in input_file:
         print("Running", filename)
-        if (Path(filename).stem+".xlsx") in parsed_list:
+        if (Path(filename).stem + ".xlsx") in parsed_list:
             print(filename, "is already parsed")
             continue
         error_msg_sheet = checking_sheets(filename)
@@ -842,7 +971,7 @@ def main():
     pf_base_name = Path(arguments.parsed_file).stem
     cf_base_name = Path(arguments.clinvar_file).stem
     now = datetime.now()
-    print("uploading log files to DNAnexus")
+    print("uploading log file(s) to DNAnexus")
     dx_login(arguments.token)
     dxpy.upload_local_file(
         arguments.parsed_file,
@@ -858,20 +987,21 @@ def main():
         + now.strftime("%H%M%S")
         + ".txt",
     )
-    dxpy.upload_local_file(
-        arguments.clinvar_file,
-        project=config_variable["info"]["projectID"],
-        name=cf_base_name
-        + "_"
-        + now.strftime("%Y")
-        + "_"
-        + now.strftime("%m")
-        + "_"
-        + now.strftime("%d")
-        + "_"
-        + now.strftime("%H%M%S")
-        + ".txt",
-    )
+    if os.path.isfile(arguments.clinvar_file):
+        dxpy.upload_local_file(
+            arguments.clinvar_file,
+            project=config_variable["info"]["projectID"],
+            name=cf_base_name
+            + "_"
+            + now.strftime("%Y")
+            + "_"
+            + now.strftime("%m")
+            + "_"
+            + now.strftime("%d")
+            + "_"
+            + now.strftime("%H%M%S")
+            + ".txt",
+        )
     print("Done")
 
 

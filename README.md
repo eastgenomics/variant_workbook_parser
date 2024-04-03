@@ -20,13 +20,13 @@ This script may be executed as a standalone to parse the variant workbook(s).
 
 **Other Inputs (optional):**
 
-- `--outdir` / `--o`: dir where the output csv files are saved  
+- `--outdir` / `--o`: dir where the output csv files are saved. Default is //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/ and keep as default unless necessary to change.
 - `--file` / `--f` : workbook if want to specify; if not specify, the script will take all xlxs file in the `--indir`. 
-- `--parsed_file` / `--pf` : log file to record the parsed workbook. This should be the same for every run.
-- `--clinvar_file` / `--cf` : log file to record the parsed workbook that are submitted to clinvar. \
-This should be the same for every run
-- `--failed_file` / `--ff` : log file to record the workbook that are failed to parse.
-- `--completed_dir` / `--cd` : dir to where the successfully parsed workbook(s) are moved. 
+- `--parsed_file` / `--pf` : log file to record the parsed workbook. Default is //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/log/workbooks_parsed_all_variants.txt and keep as default unless necessary to change.
+- `--clinvar_file` / `--cf` : log file to record the parsed workbook that are submitted to clinvar. Default is
+//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/log/workbooks_parsed_clinvar_variants.txt". Keep as default unless necessary to change
+- `--failed_file` / `--ff` : log file to record the workbook that are failed to parse. Default is //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/log/workbooks_fail_to_parse.txt. Keep as default unless necessary to change.
+- `--completed_dir` / `--cd` : dir to where the successfully parsed workbook(s) are moved. Default is //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/completed_wb/. Keep as default unless necessary to change.
 - `--unusual_sample_name`: boolean - default is False and the sample name in the workbook will be tested if it follows the standard naming format, and if the test fails, the workbook for that sample will not be parsed. Put this args to skip the test in samples with unusual naming format.
 - `--token` / `--tk` : dnanexus token to login
 
@@ -54,7 +54,7 @@ This script searches file(s) for given sample(s) in clingen folder of Trust PC a
 - `--input` / `--i`: input file containing a list of verified workbooks 
 - `--outdir` / `--o`: dir where to copy the verified workbooks 
 - `--folder` / `--f`: dir where to search the verified workbooks
-- `--file_not_found` / `--fnf` : log file to record the files that are not found
+- `--file_not_found` / `--fnf` : log file to record the files that are not found. Default is //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/log/workbooks_not_found_clingen.txt. Keep as default unless necessary to change.
 ## What outputs are expected from this app?
 - found verified workbooks are copied into outdir
 - workbooks_not_found_clingen.txt- log file containing the samples that are not found
