@@ -38,31 +38,48 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         "--outdir",
         "--o",
         help="dir to save the output csv files",
-        default="//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/",
+        default=(
+            "//clingen/cg/Regional Genetics Laboratories/Bioinformatics"
+            "/clinvar_submission/Output/"
+        ),
     )
     parser.add_argument(
         "--parsed_file",
         "--pf",
         help="log file to record all parsed workbook",
-        default="//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/log/workbooks_parsed_all_variants.txt",
+        default=(
+            "//clingen/cg/Regional Genetics Laboratories/Bioinformatics/"
+            "clinvar_submission/Output/log/workbooks_parsed_all_"
+            "variants.txt"
+        ),
     )
     parser.add_argument(
         "--clinvar_file",
         "--cf",
         help="log file to record all parsed workbook submitted to clinvar",
-        default="//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/log/workbooks_parsed_clinvar_variants.txt",
+        default=(
+            "//clingen/cg/Regional Genetics Laboratories/Bioinformatics/"
+            "clinvar_submission/Output/log/workbooks_parsed_clinvar_"
+            "variants.txt"
+        ),
     )
     parser.add_argument(
         "--failed_file",
         "--ff",
         help="log file to record failed workbook",
-        default="//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/log/workbooks_fail_to_parse.txt",
+        default=(
+            "//clingen/cg/Regional Genetics Laboratories/Bioinformatics/"
+            "clinvar_submission/Output/log/workbooks_fail_to_parse.txt"
+        ),
     )
     parser.add_argument(
         "--completed_dir",
         "--cd",
         help="dir to move the successfully parsed workbooks",
-        default="//clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/completed_wb/",
+        default=(
+            "//clingen/cg/Regional Genetics Laboratories/Bioinformatics/"
+            "clinvar_submission/Output/completed_wb/"
+        ),
     )
     parser.add_argument(
         "--unusual_sample_name",
@@ -111,7 +128,7 @@ def get_summary_fields(
         new_CI = CI.split("_")[1]
         combined_Rcode = CI.split("_")[0]
     panel = workbook["summary"]["F2"].value
-    date = workbook["summary"]["I22"].value  # TODO:change G22
+    date = workbook["summary"]["G22"].value
     split_sampleID = sampleID.split("-")
     instrumentID = split_sampleID[0]
     sample_ID = split_sampleID[1]
@@ -180,7 +197,7 @@ def get_included_fields(filename: str) -> pd.DataFrame:
       data frame from included sheet
     """
     workbook = load_workbook(filename)
-    num_variants = workbook["summary"]["C33"].value  # TODO: change to C38
+    num_variants = workbook["summary"]["C38"].value
     interpreted_col = get_col_letter(workbook["included"], "Interpreted")
     df = pd.read_excel(
         filename,
@@ -425,7 +442,7 @@ def checking_sheets(filename: str) -> str:
     ]
     try:
         assert (
-            summary["I21"].value == "Date"  # TODO: change to G21
+            summary["G21"].value == "Date"
         ), "extra col(s) added or change(s) done in summary sheet"
         for sheet in reports:
             report = workbook[sheet]
@@ -672,10 +689,10 @@ def check_interpreted_col(df: pd.DataFrame) -> str:
                 print(msg)
         else:
             try:
-                assert (
-                    df.loc[row, "Interpreted"] == "no"
-                ), (f"Wrong interpreted column dropdown in row {row+1} "
-                    "of included sheet")
+                assert df.loc[row, "Interpreted"] == "no", (
+                    f"Wrong interpreted column dropdown in row {row+1} "
+                    "of included sheet"
+                )
                 assert (
                     df.loc[row, "Germline classification"] is np.nan
                 ), f"Wrong interpreted column in row {row+1} of included sheet"
