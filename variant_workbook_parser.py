@@ -936,7 +936,7 @@ def main():
             ]
         ]
         if empty_workbook:
-            df_final.fillna("zero_variant", inplace=True)
+            df_final.fillna("null", inplace=True)
         else:
             if (df_final.Interpreted == "yes").sum() > 0 and list(
                 df_final["Ref genome"].unique()
@@ -978,6 +978,11 @@ def main():
                     filename,
                     "",
                 )
+            elif list(
+                df_final["Ref genome"].unique()
+            )[0] == "not_defined":
+                write_txt_file(arguments.failed_file, filename,
+                               "Ref_genome_not_defined")
         df_final.to_csv(
             arguments.outdir + Path(filename).stem + "_all_variants.csv",
             index=False,
