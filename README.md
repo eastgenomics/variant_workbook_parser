@@ -45,6 +45,8 @@ Recommend to run as below so the all the output dir and files are directed to de
 
 `python variant_workbook_parser.py --i </path/to/folder/> --f <file_name> --tk <DNAnexus token>`
 
+![Image of workflow](workbook_parser.drawio.png)
+
 # get_completed_wb.py
 
 ## What does this script do?
