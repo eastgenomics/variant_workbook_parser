@@ -570,15 +570,15 @@ class TestParserScript(unittest.TestCase):
         self.assertTrue(parser_args.file == ["cen_snv_test2.xlsx"])
         self.assertTrue(parser_args.outdir == "/test_data/output/")
         self.assertTrue(
-            parser_args.parsed_file
+            parser_args.parsed_file_log
             == "/test_data/output/log/workbooks_parsed_all_variants.txt"
         )
         self.assertTrue(
-            parser_args.clinvar_file
+            parser_args.clinvar_file_log
             == "/test_data/output/log/workbooks_parsed_clinvar_variants.txt"
         )
         self.assertTrue(
-            parser_args.failed_file
+            parser_args.failed_file_log
             == "/test_data/output/log/workbooks_fail_to_parse.txt"
         )
         self.assertTrue(

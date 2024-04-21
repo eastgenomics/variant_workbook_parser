@@ -44,7 +44,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "--parsed_file",
+        "--parsed_file_log",
         "--pf",
         help="log file to record all parsed workbook",
         default=(
@@ -54,7 +54,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "--clinvar_file",
+        "--clinvar_file_log",
         "--cf",
         help="log file to record all parsed workbook submitted to clinvar",
         default=(
@@ -64,7 +64,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
-        "--failed_file",
+        "--failed_file_log",
         "--ff",
         help="log file to record failed workbook",
         default=(
@@ -790,13 +790,13 @@ def main():
         print("Input file(s) not exist")
     check_and_create_folder(arguments.outdir)
     check_and_create_folder(arguments.completed_dir)
-    if not os.path.isfile(arguments.parsed_file):
-        with open(arguments.parsed_file, "w") as file:
+    if not os.path.isfile(arguments.parsed_file_log):
+        with open(arguments.parsed_file_log, "w") as file:
             file.close()
     unusual_sample_name = arguments.unusual_sample_name
     with open("parser_config.json") as f:
         config_variable = json.load(f)
-    parsed_list = get_parsed_list(arguments.parsed_file)
+    parsed_list = get_parsed_list(arguments.parsed_file_log)
     # extract fields from variant workbooks as df and merged
     for filename in input_file:
         print("Running", filename)
@@ -805,19 +805,19 @@ def main():
             continue
         error_msg_sheet = checking_sheets(filename)
         if error_msg_sheet:
-            write_txt_file(arguments.failed_file, filename, error_msg_sheet)
+            write_txt_file(arguments.failed_file_log, filename, error_msg_sheet)
             continue
         df_summary, error_msg_name = get_summary_fields(
             filename, config_variable, unusual_sample_name
         )
         if error_msg_name:
-            write_txt_file(arguments.failed_file, filename, error_msg_name)
+            write_txt_file(arguments.failed_file_log, filename, error_msg_name)
             continue
         df_included = get_included_fields(filename)
         if df_included["Interpreted"].isna().sum() != 0:
             print("Interpreted column in included sheet needs to be fixed")
             write_txt_file(
-                arguments.failed_file,
+                arguments.failed_file_log,
                 filename,
                 "Interpreted column in included sheet needs to be fixed",
             )
@@ -825,7 +825,7 @@ def main():
         df_report, error_msg_table = get_report_fields(filename, df_included)
         if error_msg_table:
             write_txt_file(
-                arguments.failed_file,
+                arguments.failed_file_log,
                 filename,
                 error_msg_table,
             )
@@ -842,7 +842,7 @@ def main():
             error_msg_interpreted = check_interpreted_col(df_final)
         if error_msg_interpreted:
             write_txt_file(
-                arguments.failed_file,
+                arguments.failed_file_log,
                 filename,
                 error_msg_interpreted,
             )
@@ -974,31 +974,31 @@ def main():
                     index=False,
                 )
                 write_txt_file(
-                    arguments.clinvar_file,
+                    arguments.clinvar_file_log,
                     filename,
                     "",
                 )
             elif list(
                 df_final["Ref genome"].unique()
             )[0] == "not_defined":
-                write_txt_file(arguments.failed_file, filename,
+                write_txt_file(arguments.failed_file_log, filename,
                                "Ref_genome_not_defined")
         df_final.to_csv(
             arguments.outdir + Path(filename).stem + "_all_variants.csv",
             index=False,
         )
-        write_txt_file(arguments.parsed_file, filename, "")
+        write_txt_file(arguments.parsed_file_log, filename, "")
         print("Successfully parsed", filename)
         shutil.move(filename, arguments.completed_dir)
 
     # uploading log files to dnanexus project for backup
-    pf_base_name = Path(arguments.parsed_file).stem
-    cf_base_name = Path(arguments.clinvar_file).stem
+    pf_base_name = Path(arguments.parsed_file_log).stem
+    cf_base_name = Path(arguments.clinvar_file_log).stem
     now = datetime.now()
     print("uploading log file(s) to DNAnexus")
     dx_login(arguments.token)
     dxpy.upload_local_file(
-        arguments.parsed_file,
+        arguments.parsed_file_log,
         project=config_variable["info"]["projectID"],
         name=pf_base_name
         + "_"
@@ -1011,9 +1011,9 @@ def main():
         + now.strftime("%H%M%S")
         + ".txt",
     )
-    if os.path.isfile(arguments.clinvar_file):
+    if os.path.isfile(arguments.clinvar_file_log):
         dxpy.upload_local_file(
-            arguments.clinvar_file,
+            arguments.clinvar_file_log,
             project=config_variable["info"]["projectID"],
             name=cf_base_name
             + "_"
