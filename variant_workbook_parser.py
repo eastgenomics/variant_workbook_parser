@@ -805,7 +805,8 @@ def main():
             continue
         error_msg_sheet = checking_sheets(filename)
         if error_msg_sheet:
-            write_txt_file(arguments.failed_file_log, filename, error_msg_sheet)
+            write_txt_file(arguments.failed_file_log, filename,
+                           error_msg_sheet)
             continue
         df_summary, error_msg_name = get_summary_fields(
             filename, config_variable, unusual_sample_name
