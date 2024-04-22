@@ -550,110 +550,21 @@ def check_interpret_table(
                 "HGVSc in interpret table does not match with that in "
                 "included sheet"
             )
-            if df_report.loc[row, "PVS1"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PVS1"] in strength_dropdown
-                ), "Wrong strength in PVS1"
-            if df_report.loc[row, "PS1"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PS1"] in strength_dropdown
-                ), "Wrong strength in PS1"
-            if df_report.loc[row, "PS2"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PS2"] in strength_dropdown
-                ), "Wrong strength in PS2"
-            if df_report.loc[row, "PS3"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PS3"] in strength_dropdown
-                ), "Wrong strength in PS3"
-            if df_report.loc[row, "PS4"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PS4"] in strength_dropdown
-                ), "Wrong strength in PS4"
-            if df_report.loc[row, "PM1"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PM1"] in strength_dropdown
-                ), "Wrong strength in PM1"
-            if df_report.loc[row, "PM2"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PM2"] in strength_dropdown
-                ), "Wrong strength in PM2"
-            if df_report.loc[row, "PM3"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PM3"] in strength_dropdown
-                ), "Wrong strength in PM3"
-            if df_report.loc[row, "PM4"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PM4"] in strength_dropdown
-                ), "Wrong strength in PM4"
-            if df_report.loc[row, "PM5"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PM5"] in strength_dropdown
-                ), "Wrong strength in PM5"
-            if df_report.loc[row, "PM6"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PM6"] in strength_dropdown
-                ), "Wrong strength in PM6"
-            if df_report.loc[row, "PP1"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PP1"] in strength_dropdown
-                ), "Wrong strength in PP1"
-            if df_report.loc[row, "PP2"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PP2"] in strength_dropdown
-                ), "Wrong strength in PP2"
-            if df_report.loc[row, "PP3"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PP3"] in strength_dropdown
-                ), "Wrong strength in PP3"
-            if df_report.loc[row, "PP4"] is not np.nan:
-                assert (
-                    df_report.loc[row, "PP4"] in strength_dropdown
-                ), "Wrong strength in PP4"
-            if df_report.loc[row, "BS1"] is not np.nan:
-                assert (
-                    df_report.loc[row, "BS1"] in strength_dropdown
-                ), "Wrong strength in BS1"
-            if df_report.loc[row, "BS2"] is not np.nan:
-                assert (
-                    df_report.loc[row, "BS2"] in strength_dropdown
-                ), "Wrong strength in BS2"
-            if df_report.loc[row, "BS3"] is not np.nan:
-                assert (
-                    df_report.loc[row, "BS3"] in strength_dropdown
-                ), "Wrong strength in BS3"
+            criteria_list = ["PVS1", "PS1", "PS2", "PS3", "PS4",
+                             "PM1", "PM2", "PM3", "PM4", "PM5",
+                             "PM6", "PP1", "PP2", "PP3", "PP4",
+                             "BS2", "BS3", "BS1", "BP2", "BP3",
+                             "BS4", "BP1", "BP4", "BP5", "BP7"]
+            for criteria in criteria_list:
+                if df_report.loc[row, criteria] is not np.nan:
+                    assert (
+                        df_report.loc[row, criteria] in strength_dropdown
+                    ), f"Wrong strength in {criteria}"
+
             if df_report.loc[row, "BA1"] is not np.nan:
                 assert (
                     df_report.loc[row, "BA1"] in BA1_dropdown
                 ), "Wrong strength in BA1"
-            if df_report.loc[row, "BP2"] is not np.nan:
-                assert (
-                    df_report.loc[row, "BP2"] in strength_dropdown
-                ), "Wrong strength in BP2"
-            if df_report.loc[row, "BP3"] is not np.nan:
-                assert (
-                    df_report.loc[row, "BP3"] in strength_dropdown
-                ), "Wrong strength in BP3"
-            if df_report.loc[row, "BS4"] is not np.nan:
-                assert (
-                    df_report.loc[row, "BS4"] in strength_dropdown
-                ), "Wrong strength in BS4"
-            if df_report.loc[row, "BP1"] is not np.nan:
-                assert (
-                    df_report.loc[row, "BP1"] in strength_dropdown
-                ), "Wrong strength in BP1"
-            if df_report.loc[row, "BP4"] is not np.nan:
-                assert (
-                    df_report.loc[row, "BP4"] in strength_dropdown
-                ), "Wrong strength in BP4"
-            if df_report.loc[row, "BP5"] is not np.nan:
-                assert (
-                    df_report.loc[row, "BP5"] in strength_dropdown
-                ), "Wrong strength in BP5"
-            if df_report.loc[row, "BP7"] is not np.nan:
-                assert (
-                    df_report.loc[row, "BP7"] in strength_dropdown
-                ), "Wrong strength in BP7"
 
         except AssertionError as msg:
             error_msg.append(str(msg))
