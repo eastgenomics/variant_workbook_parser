@@ -1,0 +1,17 @@
+{
+"config_information":{
+"config_version": "1.0.0"
+},
+"info":{
+"Organisation": "Cambridge Genomics Laboratory",
+"Institution": "East Genomic Laboratory Hub, NHS Genomic Medicine Service",
+"Collection method": "clinical testing",
+"Allele origin": "germline",
+"Affected status": "yes",
+"CUH folder": "CUH",
+"NUH folder": "NUH",
+"CUH org ID": 288359,
+"NUH org ID": 509428,
+"projectID": "project-GgkKKvQ4qV9FvxjzFqz6VZKP"
+}
+}
