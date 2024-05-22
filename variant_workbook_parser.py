@@ -173,10 +173,16 @@ def get_summary_fields(
     # the folder name should return designated folder for either CUH or NUH
     folder_name = get_folder(filename)
     if folder_name == config_variable["info"]["CUH folder"]:
-        df_summary["Organisation"] = config_variable["info"]["CUH Organisation"]
+        df_summary["Organisation"] = config_variable["info"][
+            "CUH Organisation"
+        ]
+
         df_summary["Organisation ID"] = config_variable["info"]["CUH org ID"]
     elif folder_name == config_variable["info"]["NUH folder"]:
-        df_summary["Organisation"] = config_variable["info"]["NUH Organisation"]
+        df_summary["Organisation"] = config_variable["info"][
+            "NUH Organisation"
+        ]
+
         df_summary["Organisation ID"] = config_variable["info"]["NUH org ID"]
     else:
         print("Running for the wrong folder")
@@ -551,11 +557,33 @@ def check_interpret_table(
                 "HGVSc in interpret table does not match with that in "
                 "included sheet"
             )
-            criteria_list = ["PVS1", "PS1", "PS2", "PS3", "PS4",
-                             "PM1", "PM2", "PM3", "PM4", "PM5",
-                             "PM6", "PP1", "PP2", "PP3", "PP4",
-                             "BS2", "BS3", "BS1", "BP2", "BP3",
-                             "BS4", "BP1", "BP4", "BP5", "BP7"]
+            criteria_list = [
+                "PVS1",
+                "PS1",
+                "PS2",
+                "PS3",
+                "PS4",
+                "PM1",
+                "PM2",
+                "PM3",
+                "PM4",
+                "PM5",
+                "PM6",
+                "PP1",
+                "PP2",
+                "PP3",
+                "PP4",
+                "BS2",
+                "BS3",
+                "BS1",
+                "BP2",
+                "BP3",
+                "BS4",
+                "BP1",
+                "BP4",
+                "BP5",
+                "BP7",
+            ]
             for criteria in criteria_list:
                 if df_report.loc[row, criteria] is not np.nan:
                     assert (
@@ -717,8 +745,9 @@ def main():
             continue
         error_msg_sheet = checking_sheets(filename)
         if error_msg_sheet:
-            write_txt_file(arguments.failed_file_log, filename,
-                           error_msg_sheet)
+            write_txt_file(
+                arguments.failed_file_log, filename, error_msg_sheet
+            )
             continue
         df_summary, error_msg_name = get_summary_fields(
             filename, config_variable, unusual_sample_name
@@ -891,11 +920,12 @@ def main():
                     filename,
                     "",
                 )
-            elif list(
-                df_final["Ref genome"].unique()
-            )[0] == "not_defined":
-                write_txt_file(arguments.failed_file_log, filename,
-                               "Ref_genome_not_defined")
+            elif list(df_final["Ref genome"].unique())[0] == "not_defined":
+                write_txt_file(
+                    arguments.failed_file_log,
+                    filename,
+                    "Ref_genome_not_defined",
+                )
         df_final.to_csv(
             arguments.outdir + Path(filename).stem + "_all_variants.csv",
             index=False,
