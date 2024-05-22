@@ -162,7 +162,6 @@ def get_summary_fields(
     df_summary["Date last evaluated"] = pd.to_datetime(
         df_summary["Date last evaluated"]
     )
-    df_summary["Organisation"] = config_variable["info"]["Organisation"]
     df_summary["Institution"] = config_variable["info"]["Institution"]
     df_summary["Collection method"] = config_variable["info"][
         "Collection method"
@@ -174,8 +173,10 @@ def get_summary_fields(
     # the folder name should return designated folder for either CUH or NUH
     folder_name = get_folder(filename)
     if folder_name == config_variable["info"]["CUH folder"]:
+        df_summary["Organisation"] = config_variable["info"]["CUH Organisation"]
         df_summary["Organisation ID"] = config_variable["info"]["CUH org ID"]
     elif folder_name == config_variable["info"]["NUH folder"]:
+        df_summary["Organisation"] = config_variable["info"]["NUH Organisation"]
         df_summary["Organisation ID"] = config_variable["info"]["NUH org ID"]
     else:
         print("Running for the wrong folder")

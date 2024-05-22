@@ -3,7 +3,8 @@
 "config_version": "1.0.0"
 },
 "info":{
-"Organisation": "Cambridge Genomics Laboratory",
+"CUH Organisation": "Cambridge Genomics Laboratory",
+"NUH Organisation": "Genomics and Molecular Medicine Service",
 "Institution": "East Genomic Laboratory Hub, NHS Genomic Medicine Service",
 "Collection method": "clinical testing",
 "Allele origin": "germline",
