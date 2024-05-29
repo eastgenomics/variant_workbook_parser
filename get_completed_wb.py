@@ -38,7 +38,7 @@ def get_command_line_args() -> argparse.Namespace:
         help="log file to record files not found",
         default=(
             "//clingen/cg/Regional Genetics Laboratories/"
-            "Bioinformatics/clinvar_submission/Output/log/"
+            "Bioinformatics/clinvar_submission/Output/"
             "workbooks_not_found_clingen.txt"
         ),
     )

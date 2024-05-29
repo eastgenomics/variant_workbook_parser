@@ -49,7 +49,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         help="log file to record all parsed workbook",
         default=(
             "//clingen/cg/Regional Genetics Laboratories/Bioinformatics/"
-            "clinvar_submission/Output/log/workbooks_parsed_all_"
+            "clinvar_submission/Output/workbooks_parsed_all_"
             "variants.txt"
         ),
     )
@@ -59,7 +59,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         help="log file to record all parsed workbook submitted to clinvar",
         default=(
             "//clingen/cg/Regional Genetics Laboratories/Bioinformatics/"
-            "clinvar_submission/Output/log/workbooks_parsed_clinvar_"
+            "clinvar_submission/Output/workbooks_parsed_clinvar_"
             "variants.txt"
         ),
     )
@@ -69,7 +69,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         help="log file to record failed workbook",
         default=(
             "//clingen/cg/Regional Genetics Laboratories/Bioinformatics/"
-            "clinvar_submission/Output/log/workbooks_fail_to_parse.txt"
+            "clinvar_submission/Output/workbooks_fail_to_parse.txt"
         ),
     )
     parser.add_argument(
