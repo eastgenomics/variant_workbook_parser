@@ -1008,7 +1008,8 @@ def main():
         dx_login(arguments.token)
         dxpy.upload_local_file(
             arguments.parsed_file_log,
-            project=config_variable["info"]["log_projectID"],
+            project=config_variable["info"]["csv_projectID"],
+            folder="/parser_logs/",
             name=pf_base_name
             + "_"
             + now.strftime("%Y%m%d")
@@ -1019,7 +1020,8 @@ def main():
     if not no_dx_upload and os.path.isfile(arguments.clinvar_file_log):
         dxpy.upload_local_file(
             arguments.clinvar_file_log,
-            project=config_variable["info"]["log_projectID"],
+            project=config_variable["info"]["csv_projectID"],
+            folder="/parser_logs/",
             name=cf_base_name
             + "_"
             + now.strftime("%Y%m%d")
