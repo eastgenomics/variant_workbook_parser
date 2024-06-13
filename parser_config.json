@@ -1,6 +1,6 @@
 {
 "config_information":{
-"config_version": "1.0.0"
+"config_version": "1.1.0"
 },
 "info":{
 "CUH Organisation": "Cambridge Genomics Laboratory",
@@ -13,6 +13,7 @@
 "NUH folder": "NUH",
 "CUH org ID": 288359,
 "NUH org ID": 509428,
-"projectID": "project-GgkKKvQ4qV9FvxjzFqz6VZKP"
+"log_projectID": "project-GgkKKvQ4qV9FvxjzFqz6VZKP",
+"csv_projectID": "project-Gk7Q4x84XPvBZPYBxVyk2v14"
 }
 }

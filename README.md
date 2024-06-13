@@ -27,7 +27,10 @@ This script may be executed as a standalone to parse the variant workbook(s).
 //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/workbooks_parsed_clinvar_variants.txt". Keep as default unless necessary to change
 - `--failed_file_log` / `--ff` : log file to record the workbook that are failed to parse. Default is //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/workbooks_fail_to_parse.txt. Keep as default unless necessary to change.
 - `--completed_dir` / `--cd` : dir to where the successfully parsed workbook(s) are moved. Default is //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/completed_wb/. Keep as default unless necessary to change.
+- `--failed_dir` / `--fd` : dir to where the failed workbook(s) are moved. Default is //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/failed_wb/. Keep as default unless necessary to change.
 - `--unusual_sample_name`: boolean - default is False and the sample name in the workbook will be tested if it follows the standard naming format, and if the test fails, the workbook for that sample will not be parsed. Put this args to skip the test in samples with unusual naming format.
+- `--no_dx_upload`: boolean - default is False and the logs and clinvar csvs are uploaded onto DNAnexus. Use this flag to skip dx uploading.
+- `--subfolder` / `--sub` : str for subfolder name in Pandora DNAnexus project. Default is `csvs`
 - `--token` / `--tk` : dnanexus token to login
 
 ## What outputs are expected from this app?
@@ -39,11 +42,11 @@ This script may be executed as a standalone to parse the variant workbook(s).
 
 
 ## Command line to run 
-`python variant_workbook_parser.py --i </path/to/folder/> --f <file_name> --o </path/to/folder/> --pf </path/to/file/> --cf </path/to/file/> --fp </path/to/file/> --cd </path/to/folder/> --tk <DNAnexus token>`
+`python variant_workbook_parser.py --i </path/to/folder/> --f <file_name> --o </path/to/folder/> --pf </path/to/file/> --cf </path/to/file/> --fp </path/to/file/> --cd </path/to/folder/> --fd </path/to/folder/> --tk <DNAnexus token>`
 
 Recommend to run as below so the all the output dir and files are directed to default
 
-`python variant_workbook_parser.py --i </path/to/folder/> --f <file_name> --tk <DNAnexus token>`
+`python variant_workbook_parser.py --i </path/to/folder/> --tk <DNAnexus token>`
 
 ![Image of workflow](workbook_parser.drawio.png)
 

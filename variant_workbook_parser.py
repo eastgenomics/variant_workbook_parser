@@ -82,12 +82,34 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--failed_dir",
+        "--fd",
+        help="dir to move the failed workbooks",
+        default=(
+            "//clingen/cg/Regional Genetics Laboratories/Bioinformatics/"
+            "clinvar_submission/Output/failed_wb/"
+        ),
+    )
+    parser.add_argument(
+        "--subfolder",
+        "--sub",
+        help="subfolder in Pandora DNAnexus project",
+        default=(
+            "/csvs/"
+        ),
+    )
+    parser.add_argument(
         "--unusual_sample_name",
         action="store_true",
         help="add this argument if sample name is unusual",
     )
     parser.add_argument(
         "--token", "--tk", help="DNAnexus token to log in", required=True
+    )
+    parser.add_argument(
+        "--no_dx_upload",
+        action="store_true",
+        help="add this argument if don't want to upload file(s) to dx",
     )
     args = parser.parse_args(arguments)
 
@@ -730,10 +752,13 @@ def main():
         print("Input file(s) not exist")
     check_and_create_folder(arguments.outdir)
     check_and_create_folder(arguments.completed_dir)
+    check_and_create_folder(arguments.failed_dir)
     if not os.path.isfile(arguments.parsed_file_log):
         with open(arguments.parsed_file_log, "w") as file:
             file.close()
     unusual_sample_name = arguments.unusual_sample_name
+    no_dx_upload = arguments.no_dx_upload
+    clinvar_count = 0
     with open("parser_config.json") as f:
         config_variable = json.load(f)
     parsed_list = get_parsed_list(arguments.parsed_file_log)
@@ -748,12 +773,14 @@ def main():
             write_txt_file(
                 arguments.failed_file_log, filename, error_msg_sheet
             )
+            shutil.move(filename, arguments.failed_dir)
             continue
         df_summary, error_msg_name = get_summary_fields(
             filename, config_variable, unusual_sample_name
         )
         if error_msg_name:
             write_txt_file(arguments.failed_file_log, filename, error_msg_name)
+            shutil.move(filename, arguments.failed_dir)
             continue
         df_included = get_included_fields(filename)
         if df_included["Interpreted"].isna().sum() != 0:
@@ -763,6 +790,7 @@ def main():
                 filename,
                 "Interpreted column in included sheet needs to be fixed",
             )
+            shutil.move(filename, arguments.failed_dir)
             continue
         df_report, error_msg_table = get_report_fields(filename, df_included)
         if error_msg_table:
@@ -771,6 +799,7 @@ def main():
                 filename,
                 error_msg_table,
             )
+            shutil.move(filename, arguments.failed_dir)
             continue
         if not df_included.empty:
             df_merged = pd.merge(df_included, df_summary, how="cross")
@@ -788,6 +817,7 @@ def main():
                 filename,
                 error_msg_interpreted,
             )
+            shutil.move(filename, arguments.failed_dir)
             continue
         df_final = df_final[
             [
@@ -880,6 +910,15 @@ def main():
         if empty_workbook:
             df_final.fillna("null", inplace=True)
         else:
+            df_final["Germline classification"] = df_final[
+                "Germline classification"
+            ].replace(
+                {
+                    "Likely Pathogenic": "Likely pathogenic",
+                    "Uncertain Significance": "Uncertain significance",
+                    "Likely Benign": "Likely benign",
+                }
+            )
             if (df_final.Interpreted == "yes").sum() > 0 and list(
                 df_final["Ref genome"].unique()
             )[0] != "not_defined":
@@ -920,6 +959,34 @@ def main():
                     filename,
                     "",
                 )
+                if not no_dx_upload:
+                    dx_login(arguments.token)
+                    now = datetime.now()
+                    print("uploading clinvar csv to DNAnexus")
+                    if clinvar_count == 0:
+                        folder_name = (
+                            "csvs_"
+                            + now.strftime("%Y")
+                            + now.strftime("%m")
+                            + now.strftime("%d")
+                            + "_"
+                            + now.strftime("%H%M%S")
+                        )
+                        project = dxpy.DXProject(
+                            config_variable["info"]["csv_projectID"]
+                        )
+                        project.new_folder(
+                            folder=arguments.subfolder
+                            + folder_name)
+                    dxpy.upload_local_file(
+                            arguments.outdir
+                            + Path(filename).stem
+                            + "_clinvar_variants.csv",
+                            project=config_variable["info"]["csv_projectID"],
+                            folder=arguments.subfolder
+                            + folder_name
+                        )
+                clinvar_count = clinvar_count + 1
             elif list(df_final["Ref genome"].unique())[0] == "not_defined":
                 write_txt_file(
                     arguments.failed_file_log,
@@ -938,32 +1005,29 @@ def main():
     pf_base_name = Path(arguments.parsed_file_log).stem
     cf_base_name = Path(arguments.clinvar_file_log).stem
     now = datetime.now()
-    print("uploading log file(s) to DNAnexus")
-    dx_login(arguments.token)
-    dxpy.upload_local_file(
-        arguments.parsed_file_log,
-        project=config_variable["info"]["projectID"],
-        name=pf_base_name
-        + "_"
-        + now.strftime("%Y")
-        + "_"
-        + now.strftime("%m")
-        + "_"
-        + now.strftime("%d")
-        + "_"
-        + now.strftime("%H%M%S")
-        + ".txt",
-    )
-    if os.path.isfile(arguments.clinvar_file_log):
+    if not no_dx_upload:
+        print("uploading log file(s) to DNAnexus")
+        dx_login(arguments.token)
+        dxpy.upload_local_file(
+            arguments.parsed_file_log,
+            project=config_variable["info"]["log_projectID"],
+            name=pf_base_name
+            + "_"
+            + now.strftime("%Y")
+            + now.strftime("%m")
+            + now.strftime("%d")
+            + "_"
+            + now.strftime("%H%M%S")
+            + ".txt",
+        )
+    if not no_dx_upload and os.path.isfile(arguments.clinvar_file_log):
         dxpy.upload_local_file(
             arguments.clinvar_file_log,
-            project=config_variable["info"]["projectID"],
+            project=config_variable["info"]["log_projectID"],
             name=cf_base_name
             + "_"
             + now.strftime("%Y")
-            + "_"
             + now.strftime("%m")
-            + "_"
             + now.strftime("%d")
             + "_"
             + now.strftime("%H%M%S")
