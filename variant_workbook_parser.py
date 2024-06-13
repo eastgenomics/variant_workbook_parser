@@ -966,9 +966,7 @@ def main():
                     if clinvar_count == 0:
                         folder_name = (
                             "csvs_"
-                            + now.strftime("%Y")
-                            + now.strftime("%m")
-                            + now.strftime("%d")
+                            + now.strftime("%Y%m%d")
                             + "_"
                             + now.strftime("%H%M%S")
                         )
@@ -1013,9 +1011,7 @@ def main():
             project=config_variable["info"]["log_projectID"],
             name=pf_base_name
             + "_"
-            + now.strftime("%Y")
-            + now.strftime("%m")
-            + now.strftime("%d")
+            + now.strftime("%Y%m%d")
             + "_"
             + now.strftime("%H%M%S")
             + ".txt",
@@ -1026,9 +1022,7 @@ def main():
             project=config_variable["info"]["log_projectID"],
             name=cf_base_name
             + "_"
-            + now.strftime("%Y")
-            + now.strftime("%m")
-            + now.strftime("%d")
+            + now.strftime("%Y%m%d")
             + "_"
             + now.strftime("%H%M%S")
             + ".txt",
