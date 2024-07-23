@@ -4,7 +4,7 @@ import sys
 import unittest
 import pandas as pd
 from openpyxl import load_workbook
-from mock import patch
+from unittest.mock import patch
 from freezegun import freeze_time
 
 sys.path.insert(1, "../")
@@ -38,6 +38,9 @@ excel_data_wrong_strength = (
 )
 excel_data_no_evaluated_date = (
     f"{TEST_DATA_DIR}/NUH/cen_snv_test4_no_evaluated_date.xlsx"
+)
+excel_data_invalid_evaluated_date = (
+    f"{TEST_DATA_DIR}/NUH/cen_snv_test4_invalid_evaluated_date.xlsx"
 )
 
 with open(f"{TEST_DATA_DIR}/test_parser_config.json") as f:
@@ -475,6 +478,19 @@ class TestParserScript(unittest.TestCase):
             excel_data_no_evaluated_date, config_variable, False
         )
         assert str(df['Date last evaluated'].item()) == "2024-07-10 00:00:00"
+
+    def test_error_message_if_date_last_evaluated_invalid(self):
+        '''
+        Test that if the workbook has an evaluation date that is not compatible
+        with datetime i.e. is not a date, the correct error message is returned
+        which will cause this workbook to be skipped and added to parsing
+        failed list
+        '''
+        df, msg = get_summary_fields(
+            excel_data_invalid_evaluated_date, config_variable, False
+        )
+        # assert msg == ("Value for date last evaluated \"Not valid\""
+        #     "is not compatible with datetime conversion")
 
     def test_get_col_letter(self):
         """

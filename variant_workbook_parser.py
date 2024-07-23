@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 import time
 from datetime import datetime, date
+from dateutil import parser
 import uuid
 import json
 import numpy as np
@@ -118,7 +119,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
 
 def get_summary_fields(
     filename: str, config_variable: dict, unusual_sample_name: bool
-) -> tuple[pd.DataFrame, str]:
+): #-> tuple[pd.DataFrame, str]:
     """
     Extract data from summary sheet of variant workbook
 
@@ -181,10 +182,22 @@ def get_summary_fields(
         "Date last evaluated": date_evaluated,
     }
     df_summary = pd.DataFrame([d])
+
     # If no date last evaluated, use today's date
     df_summary['Date last evaluated'] = df_summary[
         'Date last evaluated'
     ].fillna(str(date.today()))
+
+    # Catch if workbook has value for date last evaluated which is not datetime
+    # compatible
+    try:
+        r = bool(parser.parse(date_evaluated))
+    except parser._parser.ParserError:
+        error_msg = (f"Value for date last evaluated \"{date_evaluated}\""
+        "is not compatible with datetime conversion")
+        return df_summary, error_msg
+
+
     df_summary["Date last evaluated"] = pd.to_datetime(
         df_summary["Date last evaluated"]
     )
@@ -275,7 +288,7 @@ def get_included_fields(filename: str) -> pd.DataFrame:
 
 def get_report_fields(
     filename: str, df_included: pd.DataFrame
-) -> tuple[pd.DataFrame, str]:
+): # -> tuple[pd.DataFrame, str]:
     """
     Extract data from interpret sheet(s) of variant workbook
 
