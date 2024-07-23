@@ -5,6 +5,7 @@ import unittest
 import pandas as pd
 from openpyxl import load_workbook
 from mock import patch
+from freezegun import freeze_time
 
 sys.path.insert(1, "../")
 from variant_workbook_parser import *
@@ -34,6 +35,9 @@ excel_data_wrong_dropdown = (
 )
 excel_data_wrong_strength = (
     f"{TEST_DATA_DIR}/NUH/cen_snv_test4_wrong_interpret_strength.xlsx"
+)
+excel_data_no_evaluated_date = (
+    f"{TEST_DATA_DIR}/NUH/cen_snv_test4_no_evaluated_date.xlsx"
 )
 
 with open(f"{TEST_DATA_DIR}/test_parser_config.json") as f:
@@ -460,6 +464,17 @@ class TestParserScript(unittest.TestCase):
             instrumentID, sample_ID, batchID, testcode, probesetID
         )
         self.assertTrue(msg == "Unusual probesetID")
+
+    @freeze_time("2024-07-10 22:22:22")
+    def test_no_evaluated_date(self):
+        '''
+        Test that when there is no date last evaluated, today's date is used.
+        Expect the time to change to 00:00 as we are only using date not time.
+        '''
+        df, msg = get_summary_fields(
+            excel_data_no_evaluated_date, config_variable, False
+        )
+        assert str(df['Date last evaluated'].item()) == "2024-07-10 00:00:00"
 
     def test_get_col_letter(self):
         """

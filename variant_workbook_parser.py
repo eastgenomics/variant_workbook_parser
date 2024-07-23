@@ -6,7 +6,7 @@ import glob
 import shutil
 from pathlib import Path
 import time
-from datetime import datetime
+from datetime import datetime, date
 import uuid
 import json
 import numpy as np
@@ -150,7 +150,7 @@ def get_summary_fields(
         new_CI = CI.split("_")[1]
         combined_Rcode = CI.split("_")[0]
     panel = workbook["summary"]["F2"].value
-    date = workbook["summary"]["G22"].value
+    date_evaluated = workbook["summary"]["G22"].value
     split_sampleID = sampleID.split("-")
     instrumentID = split_sampleID[0]
     sample_ID = split_sampleID[1]
@@ -178,9 +178,13 @@ def get_summary_fields(
         "Preferred condition name": new_CI,
         "Panel": panel,
         "Ref genome": ref_genome,
-        "Date last evaluated": date,
+        "Date last evaluated": date_evaluated,
     }
     df_summary = pd.DataFrame([d])
+    # If no date last evaluated, use today's date
+    df_summary['Date last evaluated'] = df_summary[
+        'Date last evaluated'
+    ].fillna(str(date.today()))
     df_summary["Date last evaluated"] = pd.to_datetime(
         df_summary["Date last evaluated"]
     )
