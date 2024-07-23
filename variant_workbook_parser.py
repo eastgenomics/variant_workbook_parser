@@ -191,7 +191,7 @@ def get_summary_fields(
     # Catch if workbook has value for date last evaluated which is not datetime
     # compatible
     try:
-        r = bool(parser.parse(date_evaluated))
+        r = bool(parser.parse(df_summary['Date last evaluated']))
     except parser._parser.ParserError:
         error_msg = (f"Value for date last evaluated \"{date_evaluated}\""
         "is not compatible with datetime conversion")
