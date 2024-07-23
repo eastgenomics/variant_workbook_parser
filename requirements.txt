@@ -3,4 +3,4 @@ pandas==1.4.4
 numpy==1.21.5
 mock==4.0.3
 dxpy==0.370.2
-freezegun=1.5.1
+freezegun==1.5.1
