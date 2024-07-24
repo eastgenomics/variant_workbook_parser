@@ -105,7 +105,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         help="add this argument if sample name is unusual",
     )
     parser.add_argument(
-        "--token", "--tk", help="DNAnexus token to log in", required=True
+        "--token", "--tk", help="DNAnexus token to log in", required=False
     )
     parser.add_argument(
         "--no_dx_upload",
