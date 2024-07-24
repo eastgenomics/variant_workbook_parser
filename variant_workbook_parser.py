@@ -119,7 +119,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
 
 def get_summary_fields(
     filename: str, config_variable: dict, unusual_sample_name: bool
-): # -> tuple[pd.DataFrame, str]
+):  # -> tuple[pd.DataFrame, str]
     """
     Extract data from summary sheet of variant workbook
 
@@ -194,8 +194,10 @@ def get_summary_fields(
     try:
         r = bool(parser.parse(str(df_summary['Date last evaluated'][0])))
     except parser._parser.ParserError:
-        error_msg = (f"Value for date last evaluated \"{date_evaluated}\""
-        "is not compatible with datetime conversion")
+        error_msg = (
+            f"Value for date last evaluated \"{date_evaluated}\" is not "
+            "compatible with datetime conversion"
+        )
         return df_summary, error_msg
 
 
@@ -289,7 +291,7 @@ def get_included_fields(filename: str) -> pd.DataFrame:
 
 def get_report_fields(
     filename: str, df_included: pd.DataFrame
-): # -> tuple[pd.DataFrame, str]
+):  # -> tuple[pd.DataFrame, str]
     """
     Extract data from interpret sheet(s) of variant workbook
 

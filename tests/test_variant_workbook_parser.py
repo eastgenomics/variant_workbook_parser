@@ -491,8 +491,10 @@ class TestParserScript(unittest.TestCase):
         df, msg = get_summary_fields(
             excel_data_invalid_evaluated_date, config_variable, False
         )
-        assert msg == ("Value for date last evaluated \"Not valid\""
-            "is not compatible with datetime conversion")
+        assert msg == (
+            "Value for date last evaluated \"Not valid\""
+            "is not compatible with datetime conversion"
+        )
 
     def test_get_col_letter(self):
         """
