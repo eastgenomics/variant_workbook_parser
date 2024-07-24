@@ -192,7 +192,7 @@ def get_summary_fields(
     # compatible
     # Can test with first item in series as all rows have the same date value
     try:
-        r = bool(parser.parse(df_summary['Date last evaluated'][0]))
+        r = bool(parser.parse(str(df_summary['Date last evaluated'][0])))
     except parser._parser.ParserError:
         error_msg = (f"Value for date last evaluated \"{date_evaluated}\""
         "is not compatible with datetime conversion")
