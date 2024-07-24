@@ -119,7 +119,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
 
 def get_summary_fields(
     filename: str, config_variable: dict, unusual_sample_name: bool
-): #-> tuple[pd.DataFrame, str]:
+) -> tuple[pd.DataFrame, str]:
     """
     Extract data from summary sheet of variant workbook
 
@@ -289,7 +289,7 @@ def get_included_fields(filename: str) -> pd.DataFrame:
 
 def get_report_fields(
     filename: str, df_included: pd.DataFrame
-): # -> tuple[pd.DataFrame, str]:
+) -> tuple[pd.DataFrame, str]:
     """
     Extract data from interpret sheet(s) of variant workbook
 
