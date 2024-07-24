@@ -484,13 +484,14 @@ class TestParserScript(unittest.TestCase):
         Test that if the workbook has an evaluation date that is not compatible
         with datetime i.e. is not a date, the correct error message is returned
         which will cause this workbook to be skipped and added to parsing
-        failed list
+        failed list.
+        This test uses an example workbook with "Not valid" in the date cell
         '''
         df, msg = get_summary_fields(
             excel_data_invalid_evaluated_date, config_variable, False
         )
-        # assert msg == ("Value for date last evaluated \"Not valid\""
-        #     "is not compatible with datetime conversion")
+        assert msg == ("Value for date last evaluated \"Not valid\""
+            "is not compatible with datetime conversion")
 
     def test_get_col_letter(self):
         """
