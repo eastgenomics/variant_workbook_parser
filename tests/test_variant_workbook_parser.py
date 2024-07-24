@@ -473,6 +473,7 @@ class TestParserScript(unittest.TestCase):
         '''
         Test that when there is no date last evaluated, today's date is used.
         Expect the time to change to 00:00 as we are only using date not time.
+        This test uses an example workbook with nothing in the date cell
         '''
         df, msg = get_summary_fields(
             excel_data_no_evaluated_date, config_variable, False
