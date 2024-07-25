@@ -6,7 +6,8 @@ import glob
 import shutil
 from pathlib import Path
 import time
-from datetime import datetime
+from datetime import datetime, date
+from dateutil import parser as date_parser
 import uuid
 import json
 import numpy as np
@@ -104,7 +105,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
         help="add this argument if sample name is unusual",
     )
     parser.add_argument(
-        "--token", "--tk", help="DNAnexus token to log in", required=True
+        "--token", "--tk", help="DNAnexus token to log in", required=False
     )
     parser.add_argument(
         "--no_dx_upload",
@@ -118,7 +119,7 @@ def get_command_line_args(arguments) -> argparse.Namespace:
 
 def get_summary_fields(
     filename: str, config_variable: dict, unusual_sample_name: bool
-) -> tuple[pd.DataFrame, str]:
+):  # -> tuple[pd.DataFrame, str]
     """
     Extract data from summary sheet of variant workbook
 
@@ -150,7 +151,7 @@ def get_summary_fields(
         new_CI = CI.split("_")[1]
         combined_Rcode = CI.split("_")[0]
     panel = workbook["summary"]["F2"].value
-    date = workbook["summary"]["G22"].value
+    date_evaluated = workbook["summary"]["G22"].value
     split_sampleID = sampleID.split("-")
     instrumentID = split_sampleID[0]
     sample_ID = split_sampleID[1]
@@ -178,9 +179,28 @@ def get_summary_fields(
         "Preferred condition name": new_CI,
         "Panel": panel,
         "Ref genome": ref_genome,
-        "Date last evaluated": date,
+        "Date last evaluated": date_evaluated,
     }
     df_summary = pd.DataFrame([d])
+
+    # If no date last evaluated, use today's date
+    df_summary['Date last evaluated'] = df_summary[
+        'Date last evaluated'
+    ].fillna(str(date.today()))
+
+    # Catch if workbook has value for date last evaluated which is not datetime
+    # compatible
+    # Can test with first item in series as all rows have the same date value
+    try:
+        r = bool(date_parser.parse(str(df_summary['Date last evaluated'][0])))
+    except date_parser._parser.ParserError:
+        error_msg = (
+            f"Value for date last evaluated \"{date_evaluated}\" is not "
+            "compatible with datetime conversion"
+        )
+        return df_summary, error_msg
+
+
     df_summary["Date last evaluated"] = pd.to_datetime(
         df_summary["Date last evaluated"]
     )
@@ -271,7 +291,7 @@ def get_included_fields(filename: str) -> pd.DataFrame:
 
 def get_report_fields(
     filename: str, df_included: pd.DataFrame
-) -> tuple[pd.DataFrame, str]:
+):  # -> tuple[pd.DataFrame, str]
     """
     Extract data from interpret sheet(s) of variant workbook
 
@@ -671,7 +691,7 @@ def get_folder(filename: str) -> str:
     get the folder of input file
     Parameters:
     ----------
-      str for input finame
+      str for input filename
 
     Return:
       str for folder name

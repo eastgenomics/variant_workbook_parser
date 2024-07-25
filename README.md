@@ -33,7 +33,31 @@ This script may be executed as a standalone to parse the variant workbook(s).
 - `--subfolder` / `--sub` : str for subfolder name in Pandora DNAnexus project. Default is `csvs`
 - `--token` / `--tk` : dnanexus token to login
 
-## What outputs are expected from this app?
+## Configuration file (parser_config.json)
+This sets some of the variables required for ClinVar submission. It also sets the folders for gathering workbooks and the DNAnexus project for uploading the CSVs.
+Example config format:
+```
+{
+    "config_information": {
+        config_version": "1.1.0"
+    },
+    "info": {
+        "CUH Organisation": "Cambridge Genomics Laboratory",
+        "NUH Organisation": "Genomics and Molecular Medicine Service",
+        "Institution": "East Genomic Laboratory Hub, NHS Genomic Medicine Service",
+        "Collection method": "clinical testing",
+        "Allele origin": "germline",
+        "Affected status": "yes",
+        "CUH folder": "CUH",
+        "NUH folder": "NUH",
+        "CUH org ID": 288359,
+        "NUH org ID": 509428,
+        "csv_projectID": "project-xxxx"
+    }
+}
+```
+
+## What outputs are expected from this script?
 - csv file containing all variants from the workbook
 - csv file containing interpreted variant(s) from the workbook for clinvar submission (optional)
 - workbooks_fail_to_parse.txt (optional) - txt file containing the file(s) that fails to be parsed by parser script and reason for fail
