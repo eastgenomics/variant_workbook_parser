@@ -762,7 +762,7 @@ def dx_login(token: str) -> bool:
 def main():
     arguments = get_command_line_args(sys.argv[1:])
     if not arguments.no_dx_upload and not arguments.token:
-        raise ValueError(
+        raise RuntimeError(
             "--no_dx_upload=False but no DNAnexus token provided via --token"
         )
     input_dir = arguments.indir

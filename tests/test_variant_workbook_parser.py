@@ -52,7 +52,6 @@ class TestParserScript(unittest.TestCase):
     Tests to ensure that all functions in variant_workbook_parser.py
     works as expected
     """
-
     def test_get_parsed_list(self):
         """
         Test "get_parsed_list" generates a list containing file name
@@ -72,7 +71,7 @@ class TestParserScript(unittest.TestCase):
 
     def test_get_folder(self):
         """
-        Test "test_get_folder" generates the correct folder
+        Test "get_folder" generates the correct folder
         where the workbook exists
         """
         NUH_folder = get_folder(excel_data_NUH)
@@ -644,6 +643,19 @@ class TestParserScript(unittest.TestCase):
         patch_exists.return_value = False
         check_and_create_folder("./new_folder_created")
         assert patch_makedirs.called is True
+
+    def test_args_logic(self):
+        """
+        Test that a RuntimeError is raised if --no_dx_upload=False and no token
+        given via --token
+        """
+        testargs = [
+            "variant_workbook_parser.py",
+            "--indir",
+            f"{TEST_DATA_DIR}/CUH"
+        ]
+        with patch.object(sys, 'argv', testargs):
+            self.assertRaises(RuntimeError, main)
 
 
 if __name__ == "__main__":
