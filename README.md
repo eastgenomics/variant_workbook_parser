@@ -21,7 +21,7 @@ This script may be executed as a standalone to parse the variant workbook(s).
 **Other Inputs (optional):**
 
 - `--outdir` / `--o`: dir where the output csv files are saved. Default is //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/ and keep as default unless necessary to change.
-- `--file` / `--f` : workbook if want to specify; if not specify, the script will take all xlxs file in the `--indir`. 
+- `--file` / `--f` : workbook if want to specify; if not specify, the script will take all xlxs file in the `--indir`.
 - `--parsed_file_log` / `--pf` : log file to record the parsed workbook. Default is //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/workbooks_parsed_all_variants.txt and keep as default unless necessary to change.
 - `--clinvar_file_log` / `--cf` : log file to record the parsed workbook that are submitted to clinvar. Default is
 //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/workbooks_parsed_clinvar_variants.txt". Keep as default unless necessary to change
@@ -31,7 +31,7 @@ This script may be executed as a standalone to parse the variant workbook(s).
 - `--unusual_sample_name`: boolean - default is False and the sample name in the workbook will be tested if it follows the standard naming format, and if the test fails, the workbook for that sample will not be parsed. Put this args to skip the test in samples with unusual naming format.
 - `--no_dx_upload`: boolean - default is False and the logs and clinvar csvs are uploaded onto DNAnexus. Use this flag to skip dx uploading.
 - `--subfolder` / `--sub` : str for subfolder name in Pandora DNAnexus project. Default is `csvs`
-- `--token` / `--tk` : dnanexus token to login
+- `--token` / `--tk` : dnanexus token to login, this is required if `--no_dx_upload=False`
 
 ## Configuration file (parser_config.json)
 This sets some of the variables required for ClinVar submission. It also sets the folders for gathering workbooks and the DNAnexus project for uploading the CSVs.
@@ -61,11 +61,11 @@ Example config format:
 - csv file containing all variants from the workbook
 - csv file containing interpreted variant(s) from the workbook for clinvar submission (optional)
 - workbooks_fail_to_parse.txt (optional) - txt file containing the file(s) that fails to be parsed by parser script and reason for fail
-- workbooks_parsed_all_variants.txt - txt file containing the file(s) that are successfully parsed 
+- workbooks_parsed_all_variants.txt - txt file containing the file(s) that are successfully parsed
 - workbooks_parsed_clinvar_variants.txt (optional) - txt file containing the file(s) that are successfully parsed for clinvar submission
 
 
-## Command line to run 
+## Command line to run
 `python variant_workbook_parser.py --i </path/to/folder/> --f <file_name> --o </path/to/folder/> --pf </path/to/file/> --cf </path/to/file/> --fp </path/to/file/> --cd </path/to/folder/> --fd </path/to/folder/> --tk <DNAnexus token>`
 
 Recommend to run as below so the all the output dir and files are directed to default
@@ -84,13 +84,13 @@ This script searches file(s) for given sample(s) in clingen folder of Trust PC a
 
 **File inputs (required)**:
 
-- `--input` / `--i`: input file containing a list of verified workbooks 
-- `--outdir` / `--o`: dir where to copy the verified workbooks 
+- `--input` / `--i`: input file containing a list of verified workbooks
+- `--outdir` / `--o`: dir where to copy the verified workbooks
 - `--folder` / `--f`: dir where to search the verified workbooks
 - `--file_not_found` / `--fnf` : log file to record the files that are not found. Default is //clingen/cg/Regional Genetics Laboratories/Bioinformatics/clinvar_submission/Output/workbooks_not_found_clingen.txt. Keep as default unless necessary to change.
 ## What outputs are expected from this app?
 - found verified workbooks are copied into outdir
 - workbooks_not_found_clingen.txt- log file containing the samples that are not found
 
-## Command line to run 
+## Command line to run
 ```python get_completed_wb.py --i <txt_file_name>  --o </path/to/folder/> --f </path/to/folder> --fnf </path/to/log file>```
